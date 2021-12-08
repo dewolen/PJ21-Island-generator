@@ -70,16 +70,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate(Vector3.DOWN, event.relative.x * mouse_sensitivity)
 		rotate_object_local(Vector3.LEFT, event.relative.y * mouse_sensitivity)
 	
-	# mouse capturing
-	elif event is InputEventKey and event.pressed:
-		match event.scancode:
-			KEY_ESCAPE:
-				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-					# release the mouse
-					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-				else:
-					# capture the mouse
-					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+#	# mouse capturing
+#	elif event is InputEventKey and event.pressed:
+#		match event.scancode:
+#			KEY_ESCAPE:
+#				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+#					# release the mouse
+#					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+#				else:
+#					# capture the mouse
+#					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 	# detect mouse button press
 	elif event is InputEventMouseButton:

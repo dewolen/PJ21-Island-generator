@@ -2,8 +2,9 @@ extends KinematicBody
 class_name PhysicsAgent
 
 
+export var disabled := false
+
 var velocity: Vector3
-var disabled := false
 var gravity := -15.0
 var look_dir: Vector3 setget _set_look_dir
 
@@ -22,7 +23,7 @@ func _physics_process(delta: float) -> void:
 	
 	velocity.y += gravity * delta
 	
-	velocity = move_and_slide(velocity, Vector3.UP, true, 4, 0.872664)
+	velocity = move_and_slide(velocity, Vector3.UP, true, 4, 0.872664, false)
 	
 	if is_on_floor():
 		velocity.y = -0.01

@@ -25,23 +25,26 @@ func generate_terrain(progress: Control) -> void:
 
 func generate_mesh_chunks(progress: Control, x_from: int, x_to: int) -> void:
 	meshes_container = get_tree().current_scene.get_node("TerrainMeshes")
+	var r2 := GenParams.radius * GenParams.radius
 	var st := SurfaceTool.new()
-	var r16: int = GenParams.radius / 16
+	var chunks_in_radius: int = GenParams.radius / GenParams.CHUNK_SIZE
 	for x1 in range(x_from, x_to):
-		var chunk_off_x = x1 * 16
-		for z1 in range(-r16, r16):
-			var chunk_off_z = z1 * 16
-			generate_mesh_surface(chunk_off_x, chunk_off_z, st)
-			#generate_mesh_voxel(chunk_off_x, chunk_off_z, st)
+		var chunk_off_x = x1 * GenParams.CHUNK_SIZE
+		for z1 in range(-chunks_in_radius, chunks_in_radius):
+			var chunk_off_z = z1 * GenParams.CHUNK_SIZE
+			if Vector2(chunk_off_x, chunk_off_z).length_squared() \
+					+ GenParams.CHUNK_SIZE <= r2:
+				generate_mesh_surface(chunk_off_x, chunk_off_z, st)
+				#generate_mesh_voxel(chunk_off_x, chunk_off_z, st)
 			progress.add_to_part_progress()
 
 
 func generate_mesh_surface(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for x2 in 16:
+	for x2 in GenParams.CHUNK_SIZE:
 		var x = c_off_x + x2
 		if x + 1 >= GenParams.radius: continue
-		for z2 in 16:
+		for z2 in GenParams.CHUNK_SIZE:
 			var z = c_off_z + z2
 			if z + 1 >= GenParams.radius: continue
 			var height := GenParams.landmass_array.get_height(x, z)
@@ -65,10 +68,10 @@ func generate_mesh_surface(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 
 func generate_mesh_voxel(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for y in range(-GenParams.landmass_array.radius_y, GenParams.landmass_array.radius_y):
-		for x2 in 16:
+	for y in GenParams.landmass_array.size_y:
+		for x2 in GenParams.CHUNK_SIZE:
 			var x = c_off_x + x2
-			for z2 in 16:
+			for z2 in GenParams.CHUNK_SIZE:
 				var z = c_off_z + z2
 				st.add_color(Color(
 						0.5, 0.5, 0.5
@@ -76,7 +79,7 @@ func generate_mesh_voxel(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 				_add_vertices_x_side(st, x, y, z)
 				_add_vertices_y_side(st, x, y, z)
 				_add_vertices_z_side(st, x, y, z)
-	add_chunk(st)
+	add_chunk(st, Vector3(0.125, 0, 0.125))
 
 
 func generate_height_collisions() -> void:
@@ -89,7 +92,7 @@ func generate_height_collisions() -> void:
 	cs.shape = hms
 	sb.scale = Vector3.ONE * 0.25
 	sb.add_child(cs)
-	sb.translation = Vector3(0.875, 1, 0.875)
+	sb.translation = Vector3(-0.125, 0, -0.125)
 	meshes_container.add_child(sb)
 
 
@@ -156,18 +159,18 @@ func delete_old_chunk_meshes() -> void:
 		m.queue_free()
 
 
-func add_chunk(st: SurfaceTool) -> void:
+func add_chunk(st: SurfaceTool, offset := Vector3.ZERO) -> void:
 	st.generate_normals()
 	var mi := MeshInstance.new()
 	#mi.name = "Landmass"
 	mi.mesh = st.commit()
-	mi.material_override = preload("res://materials/vertex_color_mat.tres")
-	#var sm := SpatialMaterial.new()
-	#sm.albedo_color = Color(randf(), randf(), randf())
-	#sm.vertex_color_use_as_albedo = true
-	#sm.flags_vertex_lighting = true
-	#mi.material_override = sm
-	mi.translation = Vector3.ONE
+	#mi.material_override = preload("res://materials/vertex_color_mat.tres")
+	var sm := SpatialMaterial.new()
+	sm.albedo_color = Color(randf(), randf(), randf())
+	sm.vertex_color_use_as_albedo = true
+	sm.flags_vertex_lighting = true
+	mi.material_override = sm
+	mi.translation = offset
 	mi.scale = Vector3.ONE * 0.25
 	#get_tree().current_scene.get_node("TerrainMeshes").add_child(mi)
 	meshes_container.call_deferred("add_child", mi)

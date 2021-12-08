@@ -32,3 +32,12 @@ func _on_slider_value_changed(_value: float) -> void:
 func _on_AutoUpdateCB_toggled(button_pressed) -> void:
 	auto_update = button_pressed
 	if auto_update: _on_slider_value_changed(0)
+
+
+func _on_FirstPersonCB_toggled(is_first_person) -> void:
+	get_node("/root/Main/OrbitingCamera").disabled = is_first_person
+	get_node("/root/Main/Player").disabled = not is_first_person
+	if is_first_person:
+		get_node("/root/Main/Player").enter_first_person()
+	else:
+		get_node("/root/Main/OrbitingCamera").set_as_current()

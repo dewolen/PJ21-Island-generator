@@ -1,10 +1,10 @@
 extends Node
 
 
-const MAX_Y_RADIUS := 32
-const CHUNK_SIZE := 16
+const MAX_Y_RADIUS := 64
+const CHUNK_SIZE := 32
 
-var radius := 512 setget _set_radius
+var radius := 256 setget _set_radius
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 
@@ -36,10 +36,21 @@ func _ready() -> void:
 	landmass_array = Array3D.new(radius, min(radius, MAX_Y_RADIUS), radius)
 
 
+func reset() -> void:
+	for t in generation_threads:
+		if t is Thread and t.is_active():
+			t.wait_to_finish()
+	generation_threads = []
+
+
 func start_generation() -> void:
 	if generation_thread.is_active(): return
+	
+	GenParams.reset()
+	StructureGenerator.reset()
+	
 	progress_node.begin_generation()
-	generation_thread.start(GenParams, "_start_generation_threaded", progress_node, Thread.PRIORITY_LOW)
+	generation_thread.start(self, "_start_generation_threaded", progress_node, Thread.PRIORITY_LOW)
 
 
 func _start_generation_threaded(progress: Control) -> void:
@@ -54,16 +65,16 @@ func _start_generation_threaded(progress: Control) -> void:
 	LandmassGenerator.delete_old_chunk_meshes()
 	generation_threads.resize(number_of_threads)
 	threads_finished = 0
-	var r16: int = GenParams.radius / 16
-	var r16foreach: int = r16 / number_of_threads
-	progress.set_max_part_progress(r16 * r16 * 4)
+	var num_of_chunks: int = radius * 2 / CHUNK_SIZE
+	var chunks_per_thread: int = num_of_chunks / number_of_threads
+	progress.set_max_part_progress(num_of_chunks * num_of_chunks)
 	for i in number_of_threads:
 		var t := Thread.new()
 		generation_threads[i] = t
-		t.start(GenParams, "_generate_multithreaded",
+		t.start(self, "_generate_multithreaded",
 				[progress,
-				-r16 + (i * 2 * r16foreach),
-				-r16 + ((i + 1) * 2 * r16foreach),
+				-(num_of_chunks / 2) + (i * chunks_per_thread),
+				-(num_of_chunks / 2) + ((i + 1) * chunks_per_thread),
 				t],
 				Thread.PRIORITY_LOW)
 	# wait for all threads to finish generating the mesh

@@ -17,10 +17,12 @@ func _set_look_dir_2d(new_value: Vector2) -> void:
 
 func _ready() -> void:
 	if not disabled:
-		$CameraOrbit/Camera.current = true
+		enter_first_person()
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
+	if disabled: return
+	
 	var movement_dir_h := Vector2()
 	if Input.is_action_pressed("move_forward"):
 		movement_dir_h.y += 1
@@ -61,3 +63,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+
+func enter_first_person() -> void:
+	$CameraOrbit/Camera.current = true
