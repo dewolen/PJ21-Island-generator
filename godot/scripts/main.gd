@@ -3,6 +3,8 @@ extends Spatial
 
 onready var player := $Player
 
+var is_player_controlled := false
+
 
 func _ready() -> void:
 	GenParams.progress_node = $GenerationProgress
@@ -21,11 +23,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					# capture the mouse
 					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			KEY_G:
-				player.disabled = true
+				pause_player()
 				GenParams.start_generation()
 			KEY_R:
 				DebugGeometryDrawer.clear_geometry()
-				player.disabled = true
+				pause_player()
 				GenParams.randomize_seed()
 				GenParams.start_generation()
 			KEY_V:
@@ -36,9 +38,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				DebugGeometryDrawer.clear_geometry()
 
 
+func pause_player() -> void:
+	if is_player_controlled:
+		player.disabled = true
+
+
 func _on_GenerationProgress_generation_finished() -> void:
 	# signal deferred
-	player.disabled = false
+	if is_player_controlled:
+		player.disabled = false
 	player.translation = Vector3(
 			0,
 			GenParams.landmass_array.get_height(0, 0) * 0.25,

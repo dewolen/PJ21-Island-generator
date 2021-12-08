@@ -3,23 +3,17 @@ extends Node
 
 
 var meshes_container: Spatial
+var biome_colors := preload("res://resources/biome_colors.tres")
+var height_colors := preload("res://resources/height_gradient.tres")
 
 
 func generate_terrain(progress: Control) -> void:
 	var arr: Array3D = GenParams.landmass_array
-	var noise: OpenSimplexNoise = GenParams.landmass_noise
 	for x in range(-GenParams.radius, GenParams.radius):
 		for z in range(-GenParams.radius, GenParams.radius):
-			var noise_value: float = noise.get_noise_2d(x, z)
-			noise_value = GenParams.noise_lut_curve.interpolate_baked(
-					(noise_value + 1.0) / 2.0) * 2.0 - 1.0
-			
-			var dist := Vector2(x, z).length() / GenParams.radius
-			var scale := GenParams.noise_scale_curve.interpolate_baked(dist)
-			var offset := GenParams.noise_offset_curve.interpolate_baked(dist)
-			var height: int = clamp(noise_value * scale + offset, -1.0, 1.0) * GenParams.max_height
-			#height = noise_value * GenParams.max_height
-			arr.set_height(x, z, height)
+			var height: float = get_transformed_noise(x, z)
+			arr.set_height(x, z, height,
+					abs(height / GenParams.max_height) + 0.01)
 		progress.set_part_progress(x as float / GenParams.radius / 2.0 + 0.5)
 
 
@@ -32,8 +26,8 @@ func generate_mesh_chunks(progress: Control, x_from: int, x_to: int) -> void:
 		var chunk_off_x = x1 * GenParams.CHUNK_SIZE
 		for z1 in range(-chunks_in_radius, chunks_in_radius):
 			var chunk_off_z = z1 * GenParams.CHUNK_SIZE
-			if Vector2(chunk_off_x, chunk_off_z).length_squared() \
-					+ GenParams.CHUNK_SIZE <= r2:
+			if Vector2(abs(chunk_off_x) - GenParams.CHUNK_SIZE,
+					chunk_off_z).length_squared() <= r2:
 				generate_mesh_surface(chunk_off_x, chunk_off_z, st)
 				#generate_mesh_voxel(chunk_off_x, chunk_off_z, st)
 			progress.add_to_part_progress()
@@ -52,16 +46,21 @@ func generate_mesh_surface(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 			var height_nz := GenParams.landmass_array.get_height(x, z + 1)
 			var height_nxz := GenParams.landmass_array.get_height(x + 1, z + 1)
 			
-			st.add_color(Color(
-					(height / 2.0 / GenParams.radius) + 0.5,
-					(height / 2.0 / GenParams.radius) + 0.5,
-					(height / 2.0 / GenParams.radius) + 0.5
-			))
+#			st.add_color(Color(
+#					(height / 2.0 / GenParams.radius) + 0.5,
+#					(height / 2.0 / GenParams.radius) + 0.5,
+#					(height / 2.0 / GenParams.radius) + 0.5
+#			))
+			st.add_color(get_color(x, z))
 			st.add_vertex(Vector3(x, height, z))
+			#st.add_color(get_color(x + 1, z))
 			st.add_vertex(Vector3(x + 1, height_nx, z))
+			#st.add_color(get_color(x, z + 1))
 			st.add_vertex(Vector3(x, height_nz, z + 1))
 			st.add_vertex(Vector3(x, height_nz, z + 1))
+			#st.add_color(get_color(x + 1, z))
 			st.add_vertex(Vector3(x + 1, height_nx, z))
+			#st.add_color(get_color(x + 1, z + 1))
 			st.add_vertex(Vector3(x + 1, height_nxz, z + 1))
 	add_chunk(st)
 
@@ -94,6 +93,26 @@ func generate_height_collisions() -> void:
 	sb.add_child(cs)
 	sb.translation = Vector3(-0.125, 0, -0.125)
 	meshes_container.add_child(sb)
+
+
+
+func get_transformed_noise(x: int, z: int) -> float:
+	var noise_value: float = GenParams.landmass_noise.get_noise_2d(x, z)
+	noise_value = GenParams.noise_lut_curve.interpolate_baked(
+			(noise_value + 1.0) / 2.0) * 2.0 - 1.0
+	var dist := Vector2(x, z).length() / GenParams.radius
+	var scale := GenParams.noise_scale_curve.interpolate_baked(dist)
+	var offset := GenParams.noise_offset_curve.interpolate_baked(dist)
+	return clamp(noise_value * scale + offset, -1.0, 1.0) * GenParams.max_height
+
+
+func get_color(x: int, z: int) -> Color:
+	#var n := GenParams.biome_noise.get_noise_2d(x, z)
+	#var n := GenParams.landmass_array.get_height(x, z) / GenParams.max_height
+	var n := GenParams.biome_noise.get_noise_2d(x, z)
+	var h := GenParams.landmass_array.get_top_value(x, z)
+	return biome_colors.interpolate(n).blend(
+			height_colors.interpolate(h + (n / 10.0)))
 
 
 func _add_vertices_x_side(st: SurfaceTool, x: int, y: int, z: int) -> void:
@@ -164,12 +183,12 @@ func add_chunk(st: SurfaceTool, offset := Vector3.ZERO) -> void:
 	var mi := MeshInstance.new()
 	#mi.name = "Landmass"
 	mi.mesh = st.commit()
-	#mi.material_override = preload("res://materials/vertex_color_mat.tres")
-	var sm := SpatialMaterial.new()
-	sm.albedo_color = Color(randf(), randf(), randf())
-	sm.vertex_color_use_as_albedo = true
-	sm.flags_vertex_lighting = true
-	mi.material_override = sm
+	mi.material_override = preload("res://materials/vertex_color_mat.tres")
+#	var sm := SpatialMaterial.new()
+#	sm.albedo_color = Color(randf(), randf(), randf())
+#	sm.vertex_color_use_as_albedo = true
+#	sm.flags_vertex_lighting = true
+#	mi.material_override = sm
 	mi.translation = offset
 	mi.scale = Vector3.ONE * 0.25
 	#get_tree().current_scene.get_node("TerrainMeshes").add_child(mi)

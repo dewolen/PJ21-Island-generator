@@ -37,6 +37,7 @@ func _on_AutoUpdateCB_toggled(button_pressed) -> void:
 func _on_FirstPersonCB_toggled(is_first_person) -> void:
 	get_node("/root/Main/OrbitingCamera").disabled = is_first_person
 	get_node("/root/Main/Player").disabled = not is_first_person
+	get_node("/root/Main").is_player_controlled = is_first_person
 	if is_first_person:
 		get_node("/root/Main/Player").enter_first_person()
 	else:

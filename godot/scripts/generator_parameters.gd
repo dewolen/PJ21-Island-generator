@@ -4,7 +4,7 @@ extends Node
 const MAX_Y_RADIUS := 64
 const CHUNK_SIZE := 32
 
-var radius := 256 setget _set_radius
+var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 
@@ -13,6 +13,7 @@ var noise_scale_curve := preload("res://resources/noise_scale_curve.tres")
 var noise_offset_curve := preload("res://resources/noise_offset_curve.tres")
 var noise_lut_curve := preload("res://resources/noise_lut_curve.tres")
 var landmass_noise := OpenSimplexNoise.new()
+var biome_noise := OpenSimplexNoise.new()
 var generation_thread := Thread.new()
 var generation_threads := []
 var threads_finished: int
@@ -104,3 +105,4 @@ func _thread_finished_generation(thread: Thread) -> void:
 
 func randomize_seed() -> void:
 	landmass_noise.seed = randi()
+	biome_noise.seed = randi()

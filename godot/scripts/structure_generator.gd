@@ -21,6 +21,7 @@ func generate_structures(progress: Control) -> void:
 				randi() % 8 + 3, randi() % 3 + 3, randi() % 8 + 3)
 		var plot: Rect2 = _get_random_empty_plot(
 				Vector2(structure_size.x, structure_size.z))
+		if not plot: continue
 		var plot_height := max(0, GenParams.landmass_array.get_height(
 				plot.position.x + (structure_size.x / 2),
 				plot.position.y + (structure_size.z / 2)))
@@ -42,7 +43,7 @@ func generate_structures(progress: Control) -> void:
 		#DebugGeometryDrawer.draw_cube(rand_pos * 0.25, 0.2)
 		DebugGeometryDrawer.draw_box(
 				structure.position * 0.25, structure.size * 0.25, Color.crimson)
-		#print(s, ": ", structure_position, " ", structure_size)
+		print(s, ": ", structure.position, " ", structure.size)
 		progress.set_part_progress(s as float / s_size)
 
 
@@ -76,8 +77,11 @@ func _get_random_empty_plot(size: Vector2) -> Rect2:
 	return Rect2()
 
 
-func level_terrain(fx: int, fz: int, sx: int, sz: int, height: int) -> void:
+func level_terrain(fx: int, fz: int, sx: int, sz: int, height: float) -> void:
 	# from (fx, fz), size (sx, sz)
+	var arr := GenParams.landmass_array
 	for ix in sx + 1:
+		var x: int = fx + ix
 		for iz in sz + 1:
-			GenParams.landmass_array.set_height(fx + ix, fz + iz, height)
+			var z: int = fz + iz
+			arr.set_height(x, z, height, arr.get_top_value(x, z))

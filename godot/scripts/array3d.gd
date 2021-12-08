@@ -41,21 +41,20 @@ func is_cell_empty(x: int, y: int, z: int) -> bool:
 	return get_value(x, y, z) == 0.0
 
 
-func set_height(x: int, z: int, height: int) -> void:
+func set_height(x: int, z: int, height: float, value_to_write := 1.0) -> void:
 	_height_data[((z + radius_z) << size_x_pow) + x + radius_x] = height
 	#return
 	var xz_offset := (((x + radius_x) << size_z_pow) + z + radius_z) << size_y_pow
-	var height_idx := height + 1
-	var value_to_write := 1.0
+	var height_idx: int = ceil(height) + 1
 	for current_y_idx in size_y:
 		if current_y_idx >= height_idx: value_to_write = 0.0
 		_data[xz_offset + current_y_idx] = value_to_write
 
 
-func get_height(x: int, z: int) -> int:
+func get_height(x: int, z: int) -> float:
 	var saved_height := _height_data[((z + radius_z) << size_x_pow) + x + radius_x]
 	if saved_height != EMPTY_HEIGHT:
-		return saved_height as int
+		return saved_height
 	var xz_offset_p1 := ((((x + radius_x) << size_z_pow) + \
 			z + radius_z) << size_y_pow) + 1
 	var height := -1
@@ -64,12 +63,17 @@ func get_height(x: int, z: int) -> int:
 		val_above_h = _data[xz_offset_p1 + height]
 		if val_above_h == 0.0: break
 		height += 1
-	return height
+	return height as float
 
 
 func empty_height_data() -> void:
 	for i in _height_data:
 		_height_data[i] = EMPTY_HEIGHT
+
+
+func get_top_value(x: int, z: int) -> float:
+	var h := get_height(x, z)
+	return get_value(x, max(0, floor(h) + 1), z)
 
 
 func set_radius(x: int, y: int, z: int) -> void:
