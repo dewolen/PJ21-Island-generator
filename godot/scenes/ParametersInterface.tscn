@@ -1,0 +1,132 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://scripts/parameters_interface.gd" type="Script" id=1]
+
+[node name="ParametersInterface" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="SlidersContainer" type="VBoxContainer" parent="."]
+margin_right = 304.0
+margin_bottom = 296.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBC" type="HBoxContainer" parent="SlidersContainer"]
+margin_right = 304.0
+margin_bottom = 16.0
+
+[node name="Label" type="Label" parent="SlidersContainer/HBC"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Octaves:"
+
+[node name="OctavesHSlider" type="HSlider" parent="SlidersContainer/HBC"]
+margin_left = 84.0
+margin_right = 304.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 9.0
+value = 4.0
+rounded = true
+
+[node name="HBC2" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 20.0
+margin_right = 304.0
+margin_bottom = 36.0
+
+[node name="Label" type="Label" parent="SlidersContainer/HBC2"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Period:"
+
+[node name="PeriodHSlider" type="HSlider" parent="SlidersContainer/HBC2"]
+margin_left = 84.0
+margin_right = 304.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+max_value = 200.0
+value = 45.0
+
+[node name="HBC3" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 40.0
+margin_right = 304.0
+margin_bottom = 56.0
+
+[node name="Label" type="Label" parent="SlidersContainer/HBC3"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Persistence:"
+
+[node name="PersistenceHSlider" type="HSlider" parent="SlidersContainer/HBC3"]
+margin_left = 84.0
+margin_right = 304.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.12
+
+[node name="HBC4" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 60.0
+margin_right = 304.0
+margin_bottom = 76.0
+
+[node name="Label" type="Label" parent="SlidersContainer/HBC4"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Lacunarity:"
+
+[node name="LacunarityHSlider" type="HSlider" parent="SlidersContainer/HBC4"]
+margin_left = 84.0
+margin_right = 304.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+min_value = -20.0
+max_value = 20.0
+value = -5.0
+
+[node name="HBC5" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 80.0
+margin_right = 304.0
+margin_bottom = 96.0
+
+[node name="Label" type="Label" parent="SlidersContainer/HBC5"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Max height:"
+
+[node name="MaxHeightHSlider" type="HSlider" parent="SlidersContainer/HBC5"]
+margin_left = 84.0
+margin_right = 304.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="AutoUpdateCB" type="CheckBox" parent="SlidersContainer"]
+margin_top = 100.0
+margin_right = 304.0
+margin_bottom = 124.0
+text = "Auto update"
+
+[connection signal="toggled" from="SlidersContainer/AutoUpdateCB" to="." method="_on_AutoUpdateCB_toggled"]
