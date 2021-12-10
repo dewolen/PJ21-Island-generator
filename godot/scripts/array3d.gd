@@ -52,6 +52,9 @@ func set_height(x: int, z: int, height: float, value_to_write := 1.0) -> void:
 
 
 func get_height(x: int, z: int) -> float:
+	if x < -radius_x or x >= radius_x \
+	or z < -radius_z or z >= radius_z:
+		return -GenParams.max_height # height outside is the lowest
 	var saved_height := _height_data[((z + radius_z) << size_x_pow) + x + radius_x]
 	if saved_height != EMPTY_HEIGHT:
 		return saved_height

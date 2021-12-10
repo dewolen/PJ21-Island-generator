@@ -3,12 +3,14 @@ extends Node
 
 const MAX_Y_RADIUS := 64
 const CHUNK_SIZE := 32
+const FLATNESS_MAP_SCALE_POW := 1
 
 var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 
 var landmass_array: Array3D
+var flatness_map: Array2D
 var noise_scale_curve := preload("res://resources/noise_scale_curve.tres")
 var noise_offset_curve := preload("res://resources/noise_offset_curve.tres")
 var noise_lut_curve := preload("res://resources/noise_lut_curve.tres")
@@ -35,6 +37,10 @@ func _set_max_height(new_value: float) -> void:
 func _ready() -> void:
 	_set_max_height(radius / 2.0)
 	landmass_array = Array3D.new(radius, min(radius, MAX_Y_RADIUS), radius)
+	flatness_map = Array2D.new(
+			radius >> FLATNESS_MAP_SCALE_POW,
+			radius >> FLATNESS_MAP_SCALE_POW
+	)
 
 
 func reset() -> void:
@@ -55,14 +61,17 @@ func start_generation() -> void:
 
 
 func _start_generation_threaded(progress: Control) -> void:
-	var step_fraction := 1.0 / 3.0
+	var step_fraction := 1.0 / 4.0
 	# stage 1
 	LandmassGenerator.generate_terrain(progress)
 	progress.set_overall_progress(step_fraction * 1)
 	# stage 2
-	StructureGenerator.generate_structures(progress)
+	StructureGenerator.generate_flatness_map(progress)
 	progress.set_overall_progress(step_fraction * 2)
 	# stage 3
+	StructureGenerator.generate_structures(progress)
+	progress.set_overall_progress(step_fraction * 3)
+	# stage 4
 	LandmassGenerator.delete_old_chunk_meshes()
 	generation_threads.resize(number_of_threads)
 	threads_finished = 0
@@ -72,7 +81,7 @@ func _start_generation_threaded(progress: Control) -> void:
 	for i in number_of_threads:
 		var t := Thread.new()
 		generation_threads[i] = t
-		t.start(self, "_generate_multithreaded",
+		t.start(self, "_generate_meshes_multithreaded",
 				[progress,
 				-(num_of_chunks / 2) + (i * chunks_per_thread),
 				-(num_of_chunks / 2) + ((i + 1) * chunks_per_thread),
@@ -80,7 +89,7 @@ func _start_generation_threaded(progress: Control) -> void:
 				Thread.PRIORITY_LOW)
 	# wait for all threads to finish generating the mesh
 	while threads_finished != number_of_threads: pass
-	progress.set_overall_progress(step_fraction * 3)
+	progress.set_overall_progress(step_fraction * 4)
 	LandmassGenerator.generate_height_collisions()
 	# finishing
 	progress.finish_generation()
@@ -88,7 +97,7 @@ func _start_generation_threaded(progress: Control) -> void:
 
 
 #func _start_generation_threaded(progress: Control) -> void:
-func _generate_multithreaded(data: Array) -> void:
+func _generate_meshes_multithreaded(data: Array) -> void:
 	var progress: Control = data[0]
 	var x_from: int = data[1]
 	var x_to: int = data[2]

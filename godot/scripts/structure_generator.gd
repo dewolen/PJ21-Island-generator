@@ -4,6 +4,8 @@ extends Node
 
 var plots := [] # Rect2 array
 var structures := [] # AABB array
+var flatness_sample_r: int = 1
+var number_of_structures := 50
 
 
 func reset() -> void:
@@ -11,9 +13,40 @@ func reset() -> void:
 	structures = []
 
 
+func generate_flatness_map(progress: Control) -> void:
+	var fmap := GenParams.flatness_map
+	var scale_pow := GenParams.FLATNESS_MAP_SCALE_POW
+	var scaled_r: int = GenParams.radius >> scale_pow
+	var arr: Array3D = GenParams.landmass_array
+	var half_off: int = (1 << scale_pow) / 2 # used to sample middle point
+	var sample_d: int = (flatness_sample_r * 2) + 1
+	var sample_area: int = sample_d * sample_d
+	# generate the mean height
+	for x in range(-scaled_r, scaled_r):
+		for z in range(-scaled_r, scaled_r):
+			var mcx := x - flatness_sample_r # mean top-left corner pos
+			var mcz := z - flatness_sample_r
+			var mean_acc: float = 0.0
+			for isx in sample_d:
+				for isz in sample_d:
+					mean_acc += arr.get_height(
+							((mcx + isx) << scale_pow) + half_off,
+							((mcz + isz) << scale_pow) + half_off)
+			var mean_height: float = mean_acc / sample_area
+			var md_acc: float = 0.0
+			for isx in sample_d:
+				for isz in sample_d:
+					var deviation := arr.get_height(
+							((mcx + isx) << scale_pow) + half_off,
+							((mcz + isz) << scale_pow) + half_off
+					) - mean_height
+					md_acc += deviation * deviation
+			fmap.set_value(x, z, (md_acc / sample_area)) # mean deviation
+		progress.set_part_progress(x as float / scaled_r / 2.0 + 0.5)
+
+
 func generate_structures(progress: Control) -> void:
 	var noise: OpenSimplexNoise = GenParams.landmass_noise
-	var number_of_structures := 50
 	
 	# generate structures
 	for s in number_of_structures:
@@ -26,7 +59,7 @@ func generate_structures(progress: Control) -> void:
 				plot.position.x + (structure_size.x / 2),
 				plot.position.y + (structure_size.z / 2)))
 		var structure_position := Vector3(
-				plot.position.x, plot_height, plot.position.y)
+				plot.position.x, floor(plot_height), plot.position.y)
 		if structure_position.x + structure_size.x >= GenParams.radius \
 		or structure_position.z + structure_size.z >= GenParams.radius:
 			print("Structure tried to generate outside island")
@@ -39,7 +72,7 @@ func generate_structures(progress: Control) -> void:
 		var structure: AABB = structures[s]
 		level_terrain(structure.position.x, structure.position.z,
 				structure.size.x, structure.size.z, structure.position.y)
-		
+
 		#DebugGeometryDrawer.draw_cube(rand_pos * 0.25, 0.2)
 		DebugGeometryDrawer.draw_box(
 				structure.position * 0.25, structure.size * 0.25, Color.crimson)

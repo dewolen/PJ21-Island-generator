@@ -10,6 +10,11 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "Reference",
+"class": "Array2D",
+"language": "GDScript",
+"path": "res://scripts/array2d.gd"
+}, {
+"base": "Reference",
 "class": "Array3D",
 "language": "GDScript",
 "path": "res://scripts/array3d.gd"
@@ -20,6 +25,7 @@ _global_script_classes=[ {
 "path": "res://scripts/physics_agent.gd"
 } ]
 _global_script_class_icons={
+"Array2D": "",
 "Array3D": "",
 "PhysicsAgent": ""
 }
