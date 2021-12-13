@@ -6,10 +6,11 @@ var plots := [] # Rect2 array
 var structures := [] # AABB array
 var flatness_sample_r: int = 1
 var number_of_structures: int = 50
-var number_of_paths: int = GenParams.radius / 20
-var structure_slope_max: float = 0.1
+var structure_slope_max: float = 0.2
 var structure_size_min: int = 6
 var structure_size_range: int = 12 / 2
+var number_of_paths: int = GenParams.radius / 40
+var path_slope_max: float = 0.3
 
 
 func reset() -> void:
@@ -87,23 +88,25 @@ func generate_structures(progress: Control) -> void:
 	
 	# generate random paths
 	for p in number_of_paths:
-		var pos1 := _get_random_land_pos()
-		var pos2 := _get_random_land_pos()
-		var success := create_path(pos1, pos2)
-		var i := 0
-		while not success and i < 100:
-			i += 1
-			pos2 = _get_random_land_pos()
-			success = create_path(pos1, pos2)
+		var pos1 := _get_random_land_pos(Vector2.ZERO, GenParams.radius, path_slope_max)
+		for s in 5:
+			var pos2 := _get_random_land_pos(pos1, 64, path_slope_max)
+			var success := create_path(pos1, pos2)
+			var i := 0
+			while not success and i < 100:
+				i += 1
+				pos2 = _get_random_land_pos(pos1, 64, path_slope_max)
+				success = create_path(pos1, pos2)
+			pos1 = pos2
 
 
-func create_path(from: Vector3, to: Vector3, surface_value := 1, thick := true) -> bool:
+func create_path(from: Vector2, to: Vector2, surface_value := 1, thick := true) -> bool:
 	var arr: Array3D = GenParams.landmass_array
 	var astar: AStar = PathfindingGenerator.astar
 	var from_idx: int = (((from.x as int) + arr.radius_x) << arr.size_z_pow) + \
-			(from.z as int) + arr.radius_z
+			(from.y as int) + arr.radius_z
 	var to_idx: int = (((to.x as int) + arr.radius_x) << arr.size_z_pow) + \
-			(to.z as int) + arr.radius_z
+			(to.y as int) + arr.radius_z
 	if not astar.has_point(from_idx) or not astar.has_point(to_idx):
 		return false
 	var path: PoolIntArray = astar.get_id_path(from_idx, to_idx)
@@ -115,46 +118,51 @@ func create_path(from: Vector3, to: Vector3, surface_value := 1, thick := true) 
 			arr.set_surface_value_by_idx(p + 1, surface_value)
 			arr.set_surface_value_by_idx(p - arr.size_z, surface_value)
 			arr.set_surface_value_by_idx(p + arr.size_z, surface_value)
-#	DebugGeometryDrawer.draw_cube(from * 0.25, 0.25, Color.deeppink)
-#	DebugGeometryDrawer.draw_cube(to * 0.25, 0.25, Color.hotpink)
-#	DebugGeometryDrawer.draw_line(from * 0.25, to * 0.25, Color.lightpink)
+	# DEBUG
+	var from3d := Vector3(from.x, arr.get_height(from.x, from.y), from.y)
+	var to3d := Vector3(to.x, arr.get_height(to.x, to.y), to.y)
+	DebugGeometryDrawer.draw_cube(from3d * 0.25, 0.25, Color.deeppink)
+	DebugGeometryDrawer.draw_cube(to3d * 0.25, 0.25, Color.hotpink)
+	DebugGeometryDrawer.draw_line(from3d * 0.25, to3d * 0.25, Color.lightpink)
 	return true
 
 
-func _get_random_land_pos(slope_min := 0.0, slope_max := 1.0) -> Vector3:
+func _get_random_land_pos(around := Vector2(0, 0), radius := GenParams.radius,
+		slope_max := 1.0, biome_range := Vector2(-1.0, 1.0)) -> Vector2:
+	var biome_noise := GenParams.biome_noise
 	var i := 0
 	while i < 100:
 		i += 1
-		var probe_x: int = (randi() % (2 * GenParams.radius)) - GenParams.radius
-		var probe_z: int = (randi() % (2 * GenParams.radius)) - GenParams.radius
+		var probe_x: int = (randi() % (2 * radius)) - radius + around.x
+		var probe_z: int = (randi() % (2 * radius)) - radius + around.y
 		var land_height := GenParams.landmass_array.get_height(probe_x, probe_z)
-		var slope := get_slope(probe_x, probe_z)
-		if slope <= slope_min or slope >= slope_max:
-			#print("Slope too high: ", slope)
-			continue # try again
 		if land_height < 0: continue # try again
-		return Vector3(probe_x, land_height, probe_z)
-	return Vector3.ZERO
+		var slope := get_slope(probe_x, probe_z)
+		if slope >= slope_max: continue # try again
+		var biome := biome_noise.get_noise_2d(probe_x, probe_z)
+		if biome < biome_range.x or biome > biome_range.y: continue # try again
+		return Vector2(probe_x, probe_z)
+	return Vector2.ZERO
 
 
 func _get_random_empty_plot(size: Vector2, check_corners := true,
-		slope_min := 0.0, slope_max := structure_slope_max) -> Rect2:
+		slope_max := structure_slope_max) -> Rect2:
 	var i := 0
 	while i < 100:
 		i += 1
-		var rand_pos := _get_random_land_pos(slope_min, slope_max)
+		var rand_pos := _get_random_land_pos(Vector2.ZERO, GenParams.radius, slope_max)
 		var rand_plot := Rect2(
-				Vector2(rand_pos.x, rand_pos.z) - (size / 2.0),
+				Vector2(rand_pos.x, rand_pos.y) - (size / 2.0),
 				size)
 		if check_corners:
 			var slope_tl := get_slope(rand_plot.position.x, rand_plot.position.y)
 			var slope_tr := get_slope(rand_plot.end.x, rand_plot.position.y)
 			var slope_bl := get_slope(rand_plot.position.x, rand_plot.end.y)
 			var slope_br := get_slope(rand_plot.end.x, rand_plot.end.y)
-			if slope_tl <= slope_min or slope_tl >= slope_max \
-			or slope_tr <= slope_min or slope_tr >= slope_max \
-			or slope_bl <= slope_min or slope_bl >= slope_max \
-			or slope_br <= slope_min or slope_br >= slope_max :
+			if slope_tl >= slope_max \
+			or slope_tr >= slope_max \
+			or slope_bl >= slope_max \
+			or slope_br >= slope_max :
 				#print("Uneven structure foundation")
 				continue
 		var space_occupied := false

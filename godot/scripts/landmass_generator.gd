@@ -108,7 +108,8 @@ func get_transformed_noise(x: int, z: int) -> float:
 	var dist := Vector2(x, z).length() / GenParams.radius
 	var scale := GenParams.noise_scale_curve.interpolate_baked(dist)
 	var offset := GenParams.noise_offset_curve.interpolate_baked(dist)
-	return clamp(noise_value * scale + offset, -1.0, 1.0) * GenParams.max_height
+	#return clamp(noise_value * scale + offset, -1.0, 1.0) * GenParams.max_height
+	return (noise_value * scale + offset) * GenParams.max_height
 
 
 func get_surface_color(value: int) -> Color:
@@ -118,10 +119,10 @@ func get_surface_color(value: int) -> Color:
 
 
 func get_gradient_color(x: int, z: int) -> Color:
-	var n := GenParams.biome_noise.get_noise_2d(x, z)
+	var bn := GenParams.biome_noise.get_noise_2d(x, z)
 	var h := GenParams.landmass_array.get_height(x, z) / GenParams.max_height
-	return biome_colors.interpolate(n).blend(
-			height_colors.interpolate(h + (n / 10.0)))
+	return biome_colors.interpolate(bn).blend(
+			height_colors.interpolate(h + (bn / 10.0)))
 
 
 func get_flatness_color(x: int, z: int) -> Color:

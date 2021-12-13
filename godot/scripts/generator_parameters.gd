@@ -1,10 +1,10 @@
 extends Node
 
 
-const MAX_Y_RADIUS := 64
-const CHUNK_SIZE := 32
+const MAX_Y_RADIUS := 128
+const CHUNK_SIZE := 128
 
-var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
+var radius := 512 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 var flatness_map_scale_pow := 1
@@ -29,6 +29,7 @@ func _set_radius(new_value: int) -> void:
 
 func _set_max_height(new_value: float) -> void:
 	max_height = clamp(new_value, 0, min(radius, MAX_Y_RADIUS))
+	#max_height = clamp(new_value, 0, radius)
 
 
 func _ready() -> void:

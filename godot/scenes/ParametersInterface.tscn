@@ -60,7 +60,7 @@ margin_bottom = 16.0
 focus_mode = 0
 size_flags_horizontal = 3
 max_value = 200.0
-value = 45.0
+value = 97.0
 
 [node name="HBC3" type="HBoxContainer" parent="SlidersContainer"]
 margin_top = 40.0

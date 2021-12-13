@@ -31,6 +31,7 @@ func _on_slider_value_changed(_value: float) -> void:
 	GenParams.landmass_noise.period = period_sh.value
 	GenParams.landmass_noise.persistence = persistence_sh.value
 	GenParams.landmass_noise.lacunarity = lacunarity_sh.value
+	#GenParams.max_height = max_height_sh.value * min(GenParams.radius, GenParams.MAX_Y_RADIUS)
 	GenParams.max_height = max_height_sh.value * min(GenParams.radius, GenParams.MAX_Y_RADIUS)
 	if auto_update:
 		GenParams.start_generation()
