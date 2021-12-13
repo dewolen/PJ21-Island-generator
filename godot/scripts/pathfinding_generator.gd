@@ -45,20 +45,20 @@ func _generate_astar_map(progress: Control) -> void:
 		progress.set_part_progress(x as float / arr.radius_x / 4.0 + 0.75)
 
 
+func get_astar_idx(x: int, z: int) -> int:
+	return ((x + GenParams.landmass_array.radius_x) << GenParams.landmass_array.size_z_pow) + \
+			z + GenParams.landmass_array.radius_z
+
+
 func set_area_disabled(fx: int, fz: int, sx: int, sz: int, disabled: bool) -> void:
 	# from (fx, fz), size (sx, sz)
-	var arr := GenParams.landmass_array
 	for ix in sx:
 		var x: int = fx + ix
 		for iz in sz:
 			var z: int = fz + iz
 			var idx := get_astar_idx(x, z)
+			if not astar.has_point(idx): continue
 			astar.set_point_disabled(idx, disabled)
-
-
-func get_astar_idx(x: int, z: int) -> int:
-	return ((x + GenParams.landmass_array.radius_x) << GenParams.landmass_array.size_z_pow) + \
-			z + GenParams.landmass_array.radius_z
 
 
 func level_points(fx: int, fz: int, sx: int, sz: int, height: float) -> void:
@@ -67,7 +67,9 @@ func level_points(fx: int, fz: int, sx: int, sz: int, height: float) -> void:
 		var x: int = fx + ix
 		for iz in sz + 1:
 			var z: int = fz + iz
-			astar.set_point_position(get_astar_idx(x, z), Vector3(x, height, z))
+			var idx := get_astar_idx(x, z)
+			if not astar.has_point(idx): continue
+			astar.set_point_position(idx, Vector3(x, height, z))
 
 
 func debug_visualize_paths() -> void:
@@ -87,6 +89,5 @@ func debug_visualize_paths() -> void:
 	mi.name = "Paths"
 	mi.mesh = st.commit()
 	mi.material_override = DebugGeometryDrawer.sm_r
-	mi.translation
 	mi.scale = Vector3.ONE * 0.25
 	LandmassGenerator.meshes_container.call_deferred("add_child", mi)

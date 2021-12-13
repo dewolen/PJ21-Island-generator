@@ -89,11 +89,40 @@ func generate_height_collisions() -> void:
 	hms.map_depth = GenParams.radius * 2
 	hms.map_data = GenParams.landmass_array._height_data
 	cs.shape = hms
+	sb.translation = Vector3(-0.125, 0, -0.125)
 	sb.rotation_degrees = Vector3(0, -90, 0)
 	sb.scale = Vector3(0.25, 0.25, -0.25)
 	sb.add_child(cs)
-	sb.translation = Vector3(-0.125, 0, -0.125)
 	meshes_container.add_child(sb)
+	
+	var seabed_h := floor(get_transformed_noise(GenParams.radius, GenParams.radius))
+	var mb_sb := StaticBody.new()
+	mb_sb.translation = Vector3(-0.125, 0, -0.125)
+	meshes_container.add_child(mb_sb)
+	var mb_bs := BoxShape.new() # border shape
+	mb_bs.extents = Vector3(GenParams.radius, -seabed_h, 1.0) * 0.25
+	var pm := PlaneMesh.new() # seabed mesh
+	pm.size = Vector2((GenParams.radius * 2) + 1000, 1000)
+	for i in 4:
+	# map borders
+		var mb_cs := CollisionShape.new()
+		mb_cs.shape = mb_bs
+		mb_cs.translation = Vector3(0, 0, GenParams.radius).rotated(
+				Vector3.UP, PI * i / 2.0) * 0.25
+		mb_cs.rotation_degrees.y = 90 * i
+		mb_sb.add_child(mb_cs)
+		# outside island seabed
+		var mi := MeshInstance.new()
+		mi.mesh = pm
+		mi.name = "Seabed"
+		mi.material_override = preload("res://materials/sand_mat.tres")
+		mi.scale = Vector3.ONE * 0.25
+		mi.translation = Vector3(500, seabed_h, GenParams.radius + 499).rotated(
+				Vector3.UP, PI * i / 2.0) * 0.25
+		mi.rotation_degrees.y = 90 * i
+		meshes_container.add_child(mi)
+	# adjust water size
+	get_tree().current_scene.get_node("Water").mesh.size = Vector2.ONE * ((GenParams.radius * 2) + 2000)
 
 
 
@@ -206,5 +235,4 @@ func add_chunk(st: SurfaceTool, offset := Vector3.ZERO) -> void:
 #	mi.material_override = sm
 	mi.translation = offset
 	mi.scale = Vector3.ONE * 0.25
-	#get_tree().current_scene.get_node("TerrainMeshes").add_child(mi)
 	meshes_container.call_deferred("add_child", mi)

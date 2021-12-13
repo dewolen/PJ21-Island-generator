@@ -39,7 +39,7 @@ margin_bottom = 14.0
 text = "Generating..."
 align = 1
 
-[node name="Control" type="Control" parent="PanelContainer/VBC"]
+[node name="Filler" type="Control" parent="PanelContainer/VBC"]
 margin_top = 18.0
 margin_right = 242.0
 margin_bottom = 28.0

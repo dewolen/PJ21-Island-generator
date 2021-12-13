@@ -13,17 +13,18 @@ __meta__ = {
 }
 
 [node name="SlidersContainer" type="VBoxContainer" parent="."]
-margin_right = 304.0
-margin_bottom = 160.0
+margin_right = 320.0
+margin_bottom = 208.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HBC" type="HBoxContainer" parent="SlidersContainer"]
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 16.0
+hint_tooltip = " Higher values result in more detailed noise but take more time to generate"
 
-[node name="Label" type="Label" parent="SlidersContainer/HBC"]
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC"]
 margin_top = 1.0
 margin_right = 80.0
 margin_bottom = 15.0
@@ -32,8 +33,9 @@ text = "Octaves:"
 
 [node name="OctavesHSlider" type="HSlider" parent="SlidersContainer/HBC"]
 margin_left = 84.0
-margin_right = 304.0
+margin_right = 286.0
 margin_bottom = 16.0
+hint_tooltip = " Higher values result in more detailed noise but take more time to generate"
 focus_mode = 0
 size_flags_horizontal = 3
 min_value = 1.0
@@ -41,12 +43,22 @@ max_value = 9.0
 value = 4.0
 rounded = true
 
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
+
 [node name="HBC2" type="HBoxContainer" parent="SlidersContainer"]
 margin_top = 20.0
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 36.0
+hint_tooltip = " A lower period results in a higher-frequency noise"
 
-[node name="Label" type="Label" parent="SlidersContainer/HBC2"]
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC2"]
 margin_top = 1.0
 margin_right = 80.0
 margin_bottom = 15.0
@@ -55,19 +67,34 @@ text = "Period:"
 
 [node name="PeriodHSlider" type="HSlider" parent="SlidersContainer/HBC2"]
 margin_left = 84.0
-margin_right = 304.0
+margin_right = 286.0
 margin_bottom = 16.0
+hint_tooltip = " A lower period results in a higher-frequency noise"
 focus_mode = 0
 size_flags_horizontal = 3
-max_value = 200.0
-value = 97.0
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC2"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
 
 [node name="HBC3" type="HBoxContainer" parent="SlidersContainer"]
 margin_top = 40.0
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 56.0
+hint_tooltip = "Contribution factor of the different octaves. 1 - all the octaves have the same contribution, 0.5 - each octave contributes half as much as the previous one"
+__meta__ = {
+"_editor_description_": ""
+}
 
-[node name="Label" type="Label" parent="SlidersContainer/HBC3"]
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC3"]
 margin_top = 1.0
 margin_right = 80.0
 margin_bottom = 15.0
@@ -76,20 +103,37 @@ text = "Persistence:"
 
 [node name="PersistenceHSlider" type="HSlider" parent="SlidersContainer/HBC3"]
 margin_left = 84.0
-margin_right = 304.0
+margin_right = 286.0
 margin_bottom = 16.0
+hint_tooltip = "Contribution factor of the different octaves. 1 - all the octaves have the same contribution, 0.5 - each octave contributes half as much as the previous one"
 focus_mode = 0
 size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 value = 0.1
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC3"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
 
 [node name="HBC4" type="HBoxContainer" parent="SlidersContainer"]
 margin_top = 60.0
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 76.0
+hint_tooltip = "Difference in period between octaves"
+__meta__ = {
+"_editor_description_": ""
+}
 
-[node name="Label" type="Label" parent="SlidersContainer/HBC4"]
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC4"]
 margin_top = 1.0
 margin_right = 80.0
 margin_bottom = 15.0
@@ -98,20 +142,33 @@ text = "Lacunarity:"
 
 [node name="LacunarityHSlider" type="HSlider" parent="SlidersContainer/HBC4"]
 margin_left = 84.0
-margin_right = 304.0
+margin_right = 286.0
 margin_bottom = 16.0
+hint_tooltip = "Difference in period between octaves"
 focus_mode = 0
 size_flags_horizontal = 3
 min_value = -20.0
 max_value = 20.0
 value = -6.0
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC4"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
 
 [node name="HBC5" type="HBoxContainer" parent="SlidersContainer"]
 margin_top = 80.0
-margin_right = 304.0
+margin_right = 320.0
 margin_bottom = 96.0
 
-[node name="Label" type="Label" parent="SlidersContainer/HBC5"]
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC5"]
 margin_top = 1.0
 margin_right = 80.0
 margin_bottom = 15.0
@@ -120,7 +177,7 @@ text = "Max height:"
 
 [node name="MaxHeightHSlider" type="HSlider" parent="SlidersContainer/HBC5"]
 margin_left = 84.0
-margin_right = 304.0
+margin_right = 286.0
 margin_bottom = 16.0
 focus_mode = 0
 size_flags_horizontal = 3
@@ -128,19 +185,157 @@ max_value = 1.0
 step = 0.01
 value = 0.6
 
-[node name="AutoUpdateCB" type="CheckBox" parent="SlidersContainer"]
-margin_top = 100.0
-margin_right = 304.0
-margin_bottom = 124.0
-focus_mode = 0
-text = "Auto update"
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC5"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
 
-[node name="FirstPersonCB" type="CheckBox" parent="SlidersContainer"]
-margin_top = 128.0
-margin_right = 304.0
-margin_bottom = 152.0
+[node name="HBC6" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 100.0
+margin_right = 320.0
+margin_bottom = 116.0
+
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC6"]
+margin_top = 1.0
+margin_right = 80.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 80, 0 )
+text = "Radius:"
+
+[node name="RadiusHSlider" type="HSlider" parent="SlidersContainer/HBC6"]
+margin_left = 84.0
+margin_right = 286.0
+margin_bottom = 16.0
+focus_mode = 0
+size_flags_horizontal = 3
+min_value = 6.0
+max_value = 10.0
+value = 8.0
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC6"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
+
+[node name="HBC8" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 120.0
+margin_right = 320.0
+margin_bottom = 144.0
+
+[node name="SmoothTerrainCB" type="CheckBox" parent="SlidersContainer/HBC8"]
+margin_right = 123.0
+margin_bottom = 24.0
+focus_mode = 0
+text = "Smooth terrain"
+
+[node name="FirstPersonCB" type="CheckBox" parent="SlidersContainer/HBC8"]
+margin_left = 127.0
+margin_right = 231.0
+margin_bottom = 24.0
 focus_mode = 0
 text = "First person"
 
-[connection signal="toggled" from="SlidersContainer/AutoUpdateCB" to="." method="_on_AutoUpdateCB_toggled"]
-[connection signal="toggled" from="SlidersContainer/FirstPersonCB" to="." method="_on_FirstPersonCB_toggled"]
+[node name="HBC9" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 148.0
+margin_right = 320.0
+margin_bottom = 164.0
+
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC9"]
+margin_top = 1.0
+margin_right = 100.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 100, 0 )
+text = "Buildings:"
+
+[node name="BuildingsHSlider" type="HSlider" parent="SlidersContainer/HBC9"]
+margin_left = 104.0
+margin_right = 286.0
+margin_bottom = 16.0
+focus_mode = 0
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.25
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC9"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
+
+[node name="HBC10" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 168.0
+margin_right = 320.0
+margin_bottom = 184.0
+
+[node name="DescLabel" type="Label" parent="SlidersContainer/HBC10"]
+margin_top = 1.0
+margin_right = 100.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 100, 0 )
+text = "Random paths:"
+
+[node name="PathsHSlider" type="HSlider" parent="SlidersContainer/HBC10"]
+margin_left = 104.0
+margin_right = 286.0
+margin_bottom = 16.0
+focus_mode = 0
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.25
+
+[node name="ValueLabel" type="Label" parent="SlidersContainer/HBC10"]
+margin_left = 290.0
+margin_top = 1.0
+margin_right = 320.0
+margin_bottom = 15.0
+rect_min_size = Vector2( 30, 0 )
+text = "1"
+align = 1
+
+[node name="HBC7" type="HBoxContainer" parent="SlidersContainer"]
+margin_top = 188.0
+margin_right = 320.0
+margin_bottom = 208.0
+
+[node name="GenerateButton" type="Button" parent="SlidersContainer/HBC7"]
+margin_right = 218.0
+margin_bottom = 20.0
+focus_mode = 0
+size_flags_horizontal = 3
+text = "Randomize seed and generate"
+
+[node name="Control" type="Control" parent="SlidersContainer/HBC7"]
+margin_left = 222.0
+margin_right = 232.0
+margin_bottom = 20.0
+rect_min_size = Vector2( 10, 0 )
+
+[node name="RegenerateButton" type="Button" parent="SlidersContainer/HBC7"]
+margin_left = 236.0
+margin_right = 320.0
+margin_bottom = 20.0
+focus_mode = 0
+text = "Regenerate"
+
+[node name="ClickBlocker" type="Control" parent="."]
+visible = false
+margin_right = 328.0
+margin_bottom = 216.0
+
+[connection signal="toggled" from="SlidersContainer/HBC8/SmoothTerrainCB" to="." method="_on_SmoothTerrainCB_toggled"]
+[connection signal="toggled" from="SlidersContainer/HBC8/FirstPersonCB" to="." method="_on_FirstPersonCB_toggled"]
+[connection signal="pressed" from="SlidersContainer/HBC7/GenerateButton" to="." method="_on_GenerateButton_pressed"]
+[connection signal="pressed" from="SlidersContainer/HBC7/RegenerateButton" to="." method="_on_RegenerateButton_pressed"]

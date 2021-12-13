@@ -11,7 +11,9 @@ onready var water_tint := $CanvasLayer/WaterTint
 
 
 func _set_look_dir_2d(new_value: Vector2) -> void:
-	look_dir_2d = new_value
+	look_dir_2d = Vector2(
+			wrapf(new_value.x, 0.0, TAU),
+			clamp(new_value.y, -PI / 2, PI / 2))
 	cam_orbit.rotation = Vector3(-look_dir_2d.y, -look_dir_2d.x, 0.0)
 	self.look_dir = -cam_orbit.transform.basis.z
 
@@ -34,14 +36,24 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_pressed("move_left"):
 		movement_dir_h.x -= 1
 	movement_dir_h = movement_dir_h.normalized().rotated(-look_dir_2d.x)
+	if Input.is_action_pressed("move_sprint"):
+		movement_dir_h *= 1.5
+	elif Input.is_action_pressed("move_walk"):
+		movement_dir_h *= 0.5
 	
 	velocity.x = movement_dir_h.x * movement_speed
 	velocity.z = -movement_dir_h.y * movement_speed
 	
-	if is_on_floor() and Input.is_action_pressed("jump"):
+	var is_underwater: bool = translation.y < -0.6
+	if (is_on_floor() or is_underwater) and Input.is_action_pressed("jump"):
 		velocity.y = jump_velocity
 	
-	water_tint.visible = translation.y < -0.6
+	if not disabled:
+		water_tint.visible = is_underwater
+		if translation.y < -GenParams.max_height:
+			velocity = Vector3.ZERO
+			translation = Vector3(
+				0, GenParams.landmass_array.get_height(0, 0) * 0.25, 0)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -72,13 +72,13 @@ func generate_structures(progress: Control) -> void:
 			continue
 		buildings.append(AABB(building_position, building_size))
 		structures.append(AABB(building_position, building_size))
+		progress.set_part_progress(b as float / number_of_buildings / 3.0)
 	# place buildings
-	var s_size := buildings.size()
-	for s in s_size:
-		create_building(buildings[s])
-		progress.set_part_progress(s as float / s_size)
+	for b in buildings:
+		create_building(b)
 
 	# connect structures
+	var s_size := structures.size()
 	for s in s_size - 1:
 		var st_from: AABB = structures[s]
 		var st_to: AABB = structures[s + 1]
@@ -92,6 +92,7 @@ func generate_structures(progress: Control) -> void:
 			PathfindingGenerator.set_area_disabled(
 					st_to.position.x - 2, st_to.position.z - 2,
 					st_to.size.x + 4, st_to.size.z + 4, true)
+		progress.set_part_progress(s as float / s_size / 3.0 + 0.33)
 	
 	# generate random paths
 	for p in number_of_paths:
@@ -105,6 +106,7 @@ func generate_structures(progress: Control) -> void:
 				pos2 = _get_random_land_pos(pos1, 64, path_slope_max)
 				success = create_path(pos1, pos2)
 			pos1 = pos2
+		progress.set_part_progress(p as float / number_of_paths / 3.0 + 0.66)
 	
 #	PathfindingGenerator.debug_visualize_paths()
 
@@ -112,7 +114,7 @@ func generate_structures(progress: Control) -> void:
 func create_building(structure: AABB) -> void:
 		level_terrain(structure.position.x, structure.position.z,
 				structure.size.x, structure.size.z,
-				structure.position.y, 1.0, false)
+				structure.position.y, 1, false)
 		PathfindingGenerator.level_points(
 				structure.position.x, structure.position.z,
 				structure.size.x, structure.size.z,

@@ -1,8 +1,8 @@
 extends Node
 
 
-const MAX_Y_RADIUS := 128
-const CHUNK_SIZE := 64
+const MAX_Y_RADIUS := 256
+const CHUNK_SIZE := 32
 
 var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
@@ -20,28 +20,36 @@ var generation_thread := Thread.new()
 var generation_threads := []
 var threads_finished: int
 var progress_node: Control
+var is_generating := false
+
+onready var main_scene: Spatial = get_tree().current_scene
 
 
 func _set_radius(new_value: int) -> void:
+	if radius == new_value: return
 	radius = new_value
-	_ready()
+	update_arrays()
 
 
 func _set_max_height(new_value: float) -> void:
+	if max_height == new_value: return
 	max_height = clamp(new_value, 0, min(radius, MAX_Y_RADIUS))
 	#max_height = clamp(new_value, 0, radius)
 
 
 func _ready() -> void:
-	_set_max_height(radius / 2.0)
+	update_arrays()
+	_set_max_height(sqrt(radius))
+	biome_noise.octaves = 2
+	biome_noise.period = 100
+
+
+func update_arrays() -> void:
 	landmass_array = Array3D.new(radius, min(radius, MAX_Y_RADIUS), radius)
 	flatness_map = Array2D.new(
 			radius >> flatness_map_scale_pow,
 			radius >> flatness_map_scale_pow,
-			flatness_map_scale_pow
-	)
-	biome_noise.octaves = 2
-	biome_noise.period = 100
+			flatness_map_scale_pow)
 
 
 func reset() -> void:
@@ -54,6 +62,9 @@ func reset() -> void:
 func start_generation() -> void:
 	if generation_thread.is_active(): return
 	
+	is_generating = true
+	main_scene.set_interface_block(true)
+	main_scene.pause_player()
 	GenParams.reset()
 	LandmassGenerator.reset()
 	StructureGenerator.reset()
@@ -100,6 +111,8 @@ func _start_generation_threaded(progress: Control) -> void:
 	LandmassGenerator.generate_height_collisions()
 	# finishing
 	progress.finish_generation()
+	is_generating = false
+	main_scene.set_interface_block(false)
 	generation_thread.call_deferred("wait_to_finish")
 
 

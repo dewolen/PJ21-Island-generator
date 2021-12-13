@@ -3,6 +3,7 @@ extends Control
 
 signal generation_finished
 
+onready var panel := $PanelContainer
 onready var overall_pb := $PanelContainer/VBC/OverallPB
 onready var current_pb := $PanelContainer/VBC/CurrentPartPB
 onready var desc_label := $PanelContainer/VBC/DescriptionLabel
@@ -11,15 +12,19 @@ var current_part_progress: int
 var max_part_progress: int
 
 
+func _ready() -> void:
+	panel.hide()
+
+
 func begin_generation() -> void:
 	overall_pb.value = 0.0
 	current_pb.value = 0.0
 	current_part_progress = 0
-	show()
+	panel.show()
 
 
 func finish_generation() -> void:
-	hide()
+	panel.hide()
 	emit_signal("generation_finished")
 
 
