@@ -35,8 +35,8 @@ func _ready() -> void:
 	sm_c.flags_unshaded = true
 	#sm_c.flags_transparent = true
 	sm_r = SpatialMaterial.new()
-	sm_r.albedo_color = Color.crimson
-	#sm_r.vertex_color_use_as_albedo = true
+	#sm_r.albedo_color = Color.crimson
+	sm_r.vertex_color_use_as_albedo = true
 	sm_r.flags_unshaded = true
 
 
@@ -131,7 +131,7 @@ func draw_cube(pos: Vector3, size := 0.1 , color := Color(), time := 0.0, node: 
 		connect("clear_geometry", mi, "free")
 
 
-func draw_ray(from: Vector3, dir: Vector3, ray_length := 1.0, color := Color(), time := 0.0, node: Node = null) -> void:
+func draw_ray(from: Vector3, dir: Vector3, ray_length := 1.0, color := Color.crimson, time := 0.0, node: Node = null) -> void:
 	if disabled: return
 	
 	var ig := ImmediateGeometry.new()
@@ -141,20 +141,13 @@ func draw_ray(from: Vector3, dir: Vector3, ray_length := 1.0, color := Color(), 
 	ig.add_vertex(dir.normalized() * ray_length)
 	ig.end()
 	ig.translation = from
+	ig.material_override = sm_r
 	
 	if node:
 		node.add_child(ig)
 	else:
 		get_tree().current_scene.add_child(ig)
 	
-	if color:
-		var sm := SpatialMaterial.new()
-		sm.albedo_color = color
-		sm.vertex_color_use_as_albedo = true
-		sm.flags_unshaded = true
-		ig.material_override = sm
-	else:
-		ig.material_override = sm_r
 	
 	if time:
 		yield(get_tree().create_timer(time), "timeout")
@@ -163,7 +156,7 @@ func draw_ray(from: Vector3, dir: Vector3, ray_length := 1.0, color := Color(), 
 		connect("clear_geometry", ig, "free")
 
 
-func draw_line(from: Vector3, to: Vector3, color := Color(), time := 0.0, node: Node = null) -> void:
+func draw_line(from: Vector3, to: Vector3, color := Color.crimson, time := 0.0, node: Node = null) -> void:
 	if disabled: return
 	
 	var ig := ImmediateGeometry.new()
@@ -173,20 +166,12 @@ func draw_line(from: Vector3, to: Vector3, color := Color(), time := 0.0, node: 
 	ig.add_vertex(to - from)
 	ig.end()
 	ig.translation = from
+	ig.material_override = sm_r
 	
 	if node:
 		node.add_child(ig)
 	else:
 		get_tree().current_scene.add_child(ig)
-	
-	if color:
-		var sm := SpatialMaterial.new()
-		sm.albedo_color = color
-		sm.vertex_color_use_as_albedo = true
-		sm.flags_unshaded = true
-		ig.material_override = sm
-	else:
-		ig.material_override = sm_r
 	
 	if time:
 		yield(get_tree().create_timer(time), "timeout")

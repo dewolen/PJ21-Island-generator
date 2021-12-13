@@ -7,6 +7,7 @@ var mouse_sensitivity := 0.005
 var look_dir_2d: Vector2 setget _set_look_dir_2d
 
 onready var cam_orbit := $CameraOrbit
+onready var water_tint := $CanvasLayer/WaterTint
 
 
 func _set_look_dir_2d(new_value: Vector2) -> void:
@@ -39,6 +40,8 @@ func _physics_process(_delta: float) -> void:
 	
 	if is_on_floor() and Input.is_action_pressed("jump"):
 		velocity.y = jump_velocity
+	
+	water_tint.visible = translation.y < -0.6
 
 
 func _unhandled_input(event: InputEvent) -> void:

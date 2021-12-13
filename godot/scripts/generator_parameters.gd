@@ -2,9 +2,9 @@ extends Node
 
 
 const MAX_Y_RADIUS := 128
-const CHUNK_SIZE := 128
+const CHUNK_SIZE := 64
 
-var radius := 512 setget _set_radius # mininum of CHUNK_SIZE
+var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 var flatness_map_scale_pow := 1
@@ -92,7 +92,9 @@ func _start_generation_threaded(progress: Control) -> void:
 				-(num_of_chunks / 2) + (i * chunks_per_thread),
 				-(num_of_chunks / 2) + ((i + 1) * chunks_per_thread),
 				t],
-				Thread.PRIORITY_LOW)
+				#Thread.PRIORITY_HIGH)
+				Thread.PRIORITY_NORMAL)
+				#Thread.PRIORITY_LOW)
 	# wait for all threads to finish generating the mesh
 	while threads_finished != number_of_threads: pass
 	LandmassGenerator.generate_height_collisions()

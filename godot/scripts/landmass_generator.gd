@@ -25,15 +25,12 @@ func generate_terrain(progress: Control) -> void:
 
 
 func generate_mesh_chunks(progress: Control, x_from: int, x_to: int) -> void:
-	var r2 := GenParams.radius * GenParams.radius
 	var st := SurfaceTool.new()
 	var chunks_in_radius: int = GenParams.radius / GenParams.CHUNK_SIZE
 	for x1 in range(x_from, x_to):
 		var chunk_off_x = x1 * GenParams.CHUNK_SIZE
 		for z1 in range(-chunks_in_radius, chunks_in_radius):
 			var chunk_off_z = z1 * GenParams.CHUNK_SIZE
-			#if Vector2(abs(chunk_off_x) - GenParams.CHUNK_SIZE,
-			#		chunk_off_z).length_squared() <= r2:
 			generate_mesh_surface(chunk_off_x, chunk_off_z, st)
 			#generate_mesh_voxel(chunk_off_x, chunk_off_z, st)
 			progress.add_to_part_progress()
@@ -58,8 +55,7 @@ func generate_mesh_surface(c_off_x: int, c_off_z: int, st: SurfaceTool) -> void:
 				height_nxz = floor(height_nxz)
 			var v := GenParams.landmass_array.get_surface_value(x, z)
 			if v == -1: continue # skip this square
-			var sc := get_surface_color(v)
-			st.add_color(sc if sc else get_gradient_color(x, z))
+			st.add_color(get_gradient_color(x, z, get_surface_color(v)))
 			st.add_vertex(Vector3(x, height, z))
 			st.add_vertex(Vector3(x + 1, height_nx, z))
 			st.add_vertex(Vector3(x, height_nz, z + 1))
@@ -118,11 +114,15 @@ func get_surface_color(value: int) -> Color:
 	return Color.black
 
 
-func get_gradient_color(x: int, z: int) -> Color:
+func get_gradient_color(x: int, z: int, surface_color := Color()) -> Color:
 	var bn := GenParams.biome_noise.get_noise_2d(x, z)
 	var h := GenParams.landmass_array.get_height(x, z) / GenParams.max_height
-	return biome_colors.interpolate(bn).blend(
-			height_colors.interpolate(h + (bn / 10.0)))
+	var h_color := height_colors.interpolate(h + (bn / 10.0))
+	if surface_color:
+		h_color.a *= 0.5
+	else:
+		surface_color = biome_colors.interpolate(bn)
+	return surface_color.blend(h_color)
 
 
 func get_flatness_color(x: int, z: int) -> Color:

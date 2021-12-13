@@ -5,11 +5,11 @@ extends Node
 var plots := [] # Rect2 array
 var structures := [] # AABB array
 var flatness_sample_r: int = 1
-var number_of_structures: int = 50
-var structure_slope_max: float = 0.2
-var structure_size_min: int = 6
-var structure_size_range: int = 12 / 2
-var number_of_paths: int = GenParams.radius / 40
+var number_of_buildings: int = GenParams.radius / 40
+var building_slope_max: float = 0.35
+var building_size_min: int = 6
+var building_size_range: int = 12 / 2
+var number_of_paths: int = GenParams.radius / 80
 var path_slope_max: float = 0.3
 
 
@@ -51,40 +51,47 @@ func generate_flatness_map(progress: Control) -> void:
 
 func generate_structures(progress: Control) -> void:
 	var arr: Array3D = GenParams.landmass_array
-	# generate structures
-	for s in number_of_structures:
-		var structure_size := Vector3(
-				(randi() % structure_size_range) * 2 + structure_size_min,
+	# generate buildings
+	var buildings := []
+	for b in number_of_buildings:
+		var building_size := Vector3(
+				(randi() % building_size_range) * 2 + building_size_min,
 				randi() % 3 + 3,
-				(randi() % structure_size_range) * 2 + structure_size_min)
+				(randi() % building_size_range) * 2 + building_size_min)
 		var plot: Rect2 = _get_random_empty_plot(
-				Vector2(structure_size.x, structure_size.z), true)
+				Vector2(building_size.x, building_size.z), true)
 		if not plot: continue
 		var plot_height := max(0, arr.get_height(
-				plot.position.x + (structure_size.x / 2),
-				plot.position.y + (structure_size.z / 2)))
-		var structure_position := Vector3(
+				plot.position.x + (building_size.x / 2),
+				plot.position.y + (building_size.z / 2)))
+		var building_position := Vector3(
 				plot.position.x, floor(plot_height), plot.position.y)
-		if structure_position.x + structure_size.x >= GenParams.radius \
-		or structure_position.z + structure_size.z >= GenParams.radius:
+		if building_position.x + building_size.x >= GenParams.radius \
+		or building_position.z + building_size.z >= GenParams.radius:
 			#print("Structure tried to generate outside island")
 			continue
-		structures.append(AABB(structure_position, structure_size))
-
-	# modify land to structures
-	var s_size := structures.size()
+		buildings.append(AABB(building_position, building_size))
+		structures.append(AABB(building_position, building_size))
+	# place buildings
+	var s_size := buildings.size()
 	for s in s_size:
-		var structure: AABB = structures[s]
-		level_terrain(structure.position.x, structure.position.z,
-				structure.size.x, structure.size.z,
-				structure.position.y, 1.0, false)
-
-		DebugGeometryDrawer.draw_cube(
-				(structure.position + (structure.size / 2.0)) * 0.25, 0.2)
-		DebugGeometryDrawer.draw_box(
-				structure.position * 0.25, structure.size * 0.25, Color.crimson)
-		#print(s, ": ", structure.position, " ", structure.size)
+		create_building(buildings[s])
 		progress.set_part_progress(s as float / s_size)
+
+	# connect structures
+	for s in s_size - 1:
+		var st_from: AABB = structures[s]
+		var st_to: AABB = structures[s + 1]
+		var path_from := Vector2(st_from.position.x, st_from.position.z)
+		var path_to := Vector2(st_to.position.x, st_to.position.z)
+		create_path(path_from, path_to)
+		PathfindingGenerator.set_area_disabled(
+				st_from.position.x - 2, st_from.position.z - 2,
+				st_from.size.x + 4, st_from.size.z + 4, true)
+		if s == s_size - 2: # last structure
+			PathfindingGenerator.set_area_disabled(
+					st_to.position.x - 2, st_to.position.z - 2,
+					st_to.size.x + 4, st_to.size.z + 4, true)
 	
 	# generate random paths
 	for p in number_of_paths:
@@ -98,6 +105,23 @@ func generate_structures(progress: Control) -> void:
 				pos2 = _get_random_land_pos(pos1, 64, path_slope_max)
 				success = create_path(pos1, pos2)
 			pos1 = pos2
+	
+#	PathfindingGenerator.debug_visualize_paths()
+
+
+func create_building(structure: AABB) -> void:
+		level_terrain(structure.position.x, structure.position.z,
+				structure.size.x, structure.size.z,
+				structure.position.y, 1.0, false)
+		PathfindingGenerator.level_points(
+				structure.position.x, structure.position.z,
+				structure.size.x, structure.size.z,
+				structure.position.y)
+#		DebugGeometryDrawer.draw_cube(
+#				(structure.position + (structure.size / 2.0)) * 0.25, 0.2)
+#		DebugGeometryDrawer.draw_box(
+#				structure.position * 0.25, structure.size * 0.25, Color.crimson)
+		#print(s, ": ", structure.position, " ", structure.size)
 
 
 func create_path(from: Vector2, to: Vector2, surface_value := 1, thick := true) -> bool:
@@ -118,12 +142,12 @@ func create_path(from: Vector2, to: Vector2, surface_value := 1, thick := true) 
 			arr.set_surface_value_by_idx(p + 1, surface_value)
 			arr.set_surface_value_by_idx(p - arr.size_z, surface_value)
 			arr.set_surface_value_by_idx(p + arr.size_z, surface_value)
-	# DEBUG
-	var from3d := Vector3(from.x, arr.get_height(from.x, from.y), from.y)
-	var to3d := Vector3(to.x, arr.get_height(to.x, to.y), to.y)
-	DebugGeometryDrawer.draw_cube(from3d * 0.25, 0.25, Color.deeppink)
-	DebugGeometryDrawer.draw_cube(to3d * 0.25, 0.25, Color.hotpink)
-	DebugGeometryDrawer.draw_line(from3d * 0.25, to3d * 0.25, Color.lightpink)
+#	# DEBUG
+#	var from3d := Vector3(from.x, arr.get_height(from.x, from.y), from.y)
+#	var to3d := Vector3(to.x, arr.get_height(to.x, to.y), to.y)
+#	DebugGeometryDrawer.draw_cube(from3d * 0.25, 0.25, Color.deeppink)
+#	DebugGeometryDrawer.draw_cube(to3d * 0.25, 0.25, Color.hotpink)
+#	DebugGeometryDrawer.draw_line(from3d * 0.25, to3d * 0.25, Color.lightpink)
 	return true
 
 
@@ -146,7 +170,7 @@ func _get_random_land_pos(around := Vector2(0, 0), radius := GenParams.radius,
 
 
 func _get_random_empty_plot(size: Vector2, check_corners := true,
-		slope_max := structure_slope_max) -> Rect2:
+		slope_max := building_slope_max) -> Rect2:
 	var i := 0
 	while i < 100:
 		i += 1
