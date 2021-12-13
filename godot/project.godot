@@ -42,6 +42,7 @@ DebugGeometryDrawer="*res://scripts/debug_geometry_drawer.gd"
 GenParams="*res://scripts/generator_parameters.gd"
 LandmassGenerator="*res://scripts/landmass_generator.gd"
 StructureGenerator="*res://scripts/structure_generator.gd"
+PathfindingGenerator="*res://scripts/pathfinding_generator.gd"
 
 [debug]
 

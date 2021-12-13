@@ -10,11 +10,13 @@ var size_x: int
 var size_z: int
 var size_x_pow: int
 var size_z_pow: int
+var scale_pow: int
 var _data := PoolRealArray()
 
 
-func _init(rx: int, rz: int) -> void:
+func _init(rx: int, rz: int, scale_power := 0) -> void:
 	set_radius(rx, rz)
+	scale_pow = scale_power
 
 
 #func is_cell_empty(x: int, z: int) -> bool:
@@ -22,11 +24,21 @@ func _init(rx: int, rz: int) -> void:
 
 
 func set_value(x: int, z: int, value: float) -> void:
-	_data[((z + radius_z) << size_x_pow) + x + radius_x] = value
+	_data[((x + radius_x) << size_z_pow) + z + radius_z] = value
 
 
 func get_value(x: int, z: int) -> float:
-	return _data[((z + radius_z) << size_x_pow) + x + radius_x]
+	return _data[((x + radius_x) << size_z_pow) + z + radius_z]
+
+
+func set_value_scaled(x: int, z: int, value: float) -> void:
+	_data[(((x >> scale_pow) + radius_x) << size_z_pow) + \
+			(z >> scale_pow) + radius_z] = value
+
+
+func get_value_scaled(x: int, z: int) -> float:
+	return _data[(((x >> scale_pow) + radius_x) << size_z_pow) + \
+			(z >> scale_pow) + radius_z]
 
 
 func set_radius(x: int, z: int) -> void:
@@ -52,7 +64,7 @@ func set_power_of_two_radius(x_r_pow: int, z_r_pow: int) -> void:
 func debug_visualize_data() -> void:
 	for ix in size_x:
 		for iz in size_z:
-			var v := _data[(iz << size_x_pow) + ix]
+			var v := _data[(ix << size_z_pow) + iz]
 			var c := Color(v, v, v)
 			DebugGeometryDrawer.draw_cube(Vector3(
 					ix - radius_x,

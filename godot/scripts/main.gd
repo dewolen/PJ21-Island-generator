@@ -30,12 +30,21 @@ func _unhandled_input(event: InputEvent) -> void:
 				pause_player()
 				GenParams.randomize_seed()
 				GenParams.start_generation()
-			KEY_V:
-				GenParams.landmass_array.debug_visualize_data()
 			KEY_B:
 				GenParams.landmass_array.debug_visualize_height_data()
 			KEY_C:
 				DebugGeometryDrawer.clear_geometry()
+			KEY_F:
+				var coords := (Vector2(
+						player.translation.x, player.translation.z) * 4).floor()
+				print("Slope at ", coords, ": ", StructureGenerator.get_slope(
+						coords.x as int, coords.y as int))
+			KEY_H:
+				var coords := (Vector2(
+						player.translation.x, player.translation.z) * 4).floor()
+				print("Height at ", coords, ": ",
+						GenParams.landmass_array.get_height(
+						coords.x as int, coords.y as int))
 
 
 func pause_player() -> void:

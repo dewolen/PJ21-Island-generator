@@ -5,6 +5,7 @@ signal generation_finished
 
 onready var overall_pb := $PanelContainer/VBC/OverallPB
 onready var current_pb := $PanelContainer/VBC/CurrentPartPB
+onready var desc_label := $PanelContainer/VBC/DescriptionLabel
 
 var current_part_progress: int
 var max_part_progress: int
@@ -22,8 +23,9 @@ func finish_generation() -> void:
 	emit_signal("generation_finished")
 
 
-func set_overall_progress(percentage: float) -> void:
+func set_overall_progress(percentage: float, description := "") -> void:
 	overall_pb.set_deferred("value", percentage)
+	desc_label.set_deferred("text", description)
 
 
 func set_part_progress(percentage: float) -> void:

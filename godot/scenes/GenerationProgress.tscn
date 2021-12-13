@@ -46,11 +46,11 @@ margin_bottom = 28.0
 mouse_filter = 2
 size_flags_vertical = 3
 
-[node name="Label2" type="Label" parent="PanelContainer/VBC"]
+[node name="DescriptionLabel" type="Label" parent="PanelContainer/VBC"]
 margin_top = 32.0
 margin_right = 242.0
 margin_bottom = 46.0
-text = "Progress:"
+text = "..."
 
 [node name="OverallPB" type="ProgressBar" parent="PanelContainer/VBC"]
 margin_top = 50.0

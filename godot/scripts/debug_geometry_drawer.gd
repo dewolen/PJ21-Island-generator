@@ -36,7 +36,7 @@ func _ready() -> void:
 	#sm_c.flags_transparent = true
 	sm_r = SpatialMaterial.new()
 	sm_r.albedo_color = Color.crimson
-	sm_r.vertex_color_use_as_albedo = true
+	#sm_r.vertex_color_use_as_albedo = true
 	sm_r.flags_unshaded = true
 
 
@@ -139,6 +139,38 @@ func draw_ray(from: Vector3, dir: Vector3, ray_length := 1.0, color := Color(), 
 	ig.set_color(color)
 	ig.add_vertex(Vector3.ZERO)
 	ig.add_vertex(dir.normalized() * ray_length)
+	ig.end()
+	ig.translation = from
+	
+	if node:
+		node.add_child(ig)
+	else:
+		get_tree().current_scene.add_child(ig)
+	
+	if color:
+		var sm := SpatialMaterial.new()
+		sm.albedo_color = color
+		sm.vertex_color_use_as_albedo = true
+		sm.flags_unshaded = true
+		ig.material_override = sm
+	else:
+		ig.material_override = sm_r
+	
+	if time:
+		yield(get_tree().create_timer(time), "timeout")
+		ig.free()
+	else:
+		connect("clear_geometry", ig, "free")
+
+
+func draw_line(from: Vector3, to: Vector3, color := Color(), time := 0.0, node: Node = null) -> void:
+	if disabled: return
+	
+	var ig := ImmediateGeometry.new()
+	ig.begin(Mesh.PRIMITIVE_LINES)
+	ig.set_color(color)
+	ig.add_vertex(Vector3.ZERO)
+	ig.add_vertex(to - from)
 	ig.end()
 	ig.translation = from
 	

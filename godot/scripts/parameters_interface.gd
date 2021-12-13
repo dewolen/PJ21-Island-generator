@@ -17,7 +17,14 @@ func _ready() -> void:
 			if s is Range:
 				s.connect("value_changed", self, "_on_slider_value_changed")
 	_on_slider_value_changed(0)
-
+	
+#	# preset 1
+#	GenParams.radius = 256
+#	octaves_sh.value = 5
+#	period_sh.value = 65
+#	persistence_sh.value = 0.1
+#	lacunarity_sh.value = -6
+#	max_height_sh.value = 0.83
 
 func _on_slider_value_changed(_value: float) -> void:
 	GenParams.landmass_noise.octaves = octaves_sh.value

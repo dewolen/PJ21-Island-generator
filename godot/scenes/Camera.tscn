@@ -36,7 +36,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 text = "G - regenerate
 R - randomize seed
-V - visualize landmass data
 B - visualize height data
 C - clear visualization data"
 align = 2
