@@ -2,13 +2,17 @@ extends KinematicBody
 class_name PhysicsAgent
 
 
-export var disabled := false
+export var disabled := false setget _set_disabled
 
 var velocity: Vector3
 var gravity := -15.0
 var look_dir: Vector3 setget _set_look_dir
 
 onready var visuals: Spatial = $Visuals
+
+
+func _set_disabled(new_value: bool) -> void:
+	disabled = new_value
 
 
 func _set_look_dir(new_value: Vector3) -> void:

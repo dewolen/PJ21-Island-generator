@@ -10,6 +10,11 @@ onready var cam_orbit := $CameraOrbit
 onready var water_tint := $CanvasLayer/WaterTint
 
 
+func _set_disabled(new_value: bool) -> void:
+	disabled = new_value
+	$CollisionShapePill.disabled = disabled # prevents crashes
+
+
 func _set_look_dir_2d(new_value: Vector2) -> void:
 	look_dir_2d = Vector2(
 			wrapf(new_value.x, 0.0, TAU),
