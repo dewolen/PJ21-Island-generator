@@ -10,6 +10,7 @@ onready var desc_label := $PanelContainer/VBC/DescriptionLabel
 
 var current_part_progress: int
 var max_part_progress: int
+var mutex := Mutex.new()
 
 
 func _ready() -> void:
@@ -38,12 +39,10 @@ func set_part_progress(percentage: float) -> void:
 
 
 func add_to_part_progress() -> void:
-	call_deferred("_add_to_part_progress_main")
-
-
-func _add_to_part_progress_main() -> void:
+	mutex.lock()
 	current_part_progress += 1
 	current_pb.value = current_part_progress as float / max_part_progress
+	mutex.unlock()
 
 
 func set_max_part_progress(new_value: int) -> void:

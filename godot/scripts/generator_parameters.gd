@@ -3,6 +3,7 @@ extends Node
 
 const MAX_Y_RADIUS := 256
 const CHUNK_SIZE := 32
+const SINGLE_THREAD_PART_DELAY := 0.1
 
 var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
@@ -73,7 +74,7 @@ func start_generation() -> void:
 	
 	progress_node.begin_generation()
 	if single_threaded:
-		yield(get_tree(), "idle_frame")
+		yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 		_start_generation_threaded(progress_node)
 	else:
 		generation_thread.start(self, "_start_generation_threaded", progress_node, Thread.PRIORITY_LOW)
@@ -81,25 +82,31 @@ func start_generation() -> void:
 
 func _start_generation_threaded(progress: Control) -> void:
 	var step_fraction := 1.0 / 5.0
+	
 	# stage 1
 	progress.set_overall_progress(0, "Generating main landmass")
+	if single_threaded: yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 	LandmassGenerator.generate_terrain(progress)
-	if single_threaded: yield(get_tree(), "idle_frame")
+	
 	# stage 2
 	progress.set_overall_progress(step_fraction * 1, "Calculating slope")
+	if single_threaded: yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 	StructureGenerator.generate_flatness_map(progress)
-	if single_threaded: yield(get_tree(), "idle_frame")
+	
 	# stage 3
 	progress.set_overall_progress(step_fraction * 2, "Generating paths")
+	if single_threaded: yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 	PathfindingGenerator.generate_paths(progress)
-	if single_threaded: yield(get_tree(), "idle_frame")
+	
 	# stage 4
 	progress.set_overall_progress(step_fraction * 3, "Placing structures")
+	if single_threaded: yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 	StructureGenerator.generate_structures(progress)
-	if single_threaded: yield(get_tree(), "idle_frame")
+	
 	# stage 5
 	progress.set_overall_progress(step_fraction * 4, "Building meshes")
 	if single_threaded:
+		yield(get_tree().create_timer(SINGLE_THREAD_PART_DELAY), "timeout")
 		var chunks_in_r: int = radius / CHUNK_SIZE
 		progress.max_part_progress = chunks_in_r * chunks_in_r * 4
 		LandmassGenerator.generate_mesh_chunks(progress, -chunks_in_r, chunks_in_r)
@@ -121,9 +128,10 @@ func _start_generation_threaded(progress: Control) -> void:
 					Thread.PRIORITY_NORMAL)
 					#Thread.PRIORITY_LOW)
 		# wait for all threads to finish generating the mesh
-		while threads_finished != number_of_threads: pass
+		while threads_finished != number_of_threads:
+			pass
 	LandmassGenerator.generate_height_collisions()
-	if single_threaded: yield(get_tree(), "idle_frame")
+	
 	# finishing
 	progress.finish_generation()
 	is_generating = false
@@ -149,5 +157,12 @@ func _thread_finished_generation(thread: Thread) -> void:
 
 
 func randomize_seed() -> void:
-	landmass_noise.seed = randi()
-	biome_noise.seed = randi()
+	set_seed(randi())
+
+
+func set_seed(new_seed: int) -> void:
+	# make sure it's 32-bit
+	new_seed = new_seed & 0xFFFFFFFF
+	landmass_noise.seed = new_seed
+	# shift the bits 4 to the left with wrap-around
+	biome_noise.seed = ((new_seed << 4) & (~0xF)) | ((new_seed >> 28) & 0xF)
