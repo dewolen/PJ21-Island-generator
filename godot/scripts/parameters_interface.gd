@@ -80,9 +80,5 @@ func _on_SmoothTerrainCB_toggled(button_pressed: bool) -> void:
 	LandmassGenerator.smooth_terrain = button_pressed
 
 
-func _on_BuildingsLE_text_changed(new_text: String) -> void:
-	StructureGenerator.number_of_buildings = int(new_text)
-
-
-func _on_PathsLE_text_changed(new_text: String) -> void:
-	StructureGenerator.number_of_paths = int(new_text)
+func _on_SingleThreadCB_toggled(button_pressed: bool) -> void:
+	GenParams.single_threaded = button_pressed

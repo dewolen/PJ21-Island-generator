@@ -8,6 +8,7 @@ var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
 var flatness_map_scale_pow := 1
+var single_threaded := false
 
 var landmass_array: Array3D
 var flatness_map: Array2D
@@ -71,7 +72,11 @@ func start_generation() -> void:
 	PathfindingGenerator.reset()
 	
 	progress_node.begin_generation()
-	generation_thread.start(self, "_start_generation_threaded", progress_node, Thread.PRIORITY_LOW)
+	if single_threaded:
+		yield(get_tree(), "idle_frame")
+		_start_generation_threaded(progress_node)
+	else:
+		generation_thread.start(self, "_start_generation_threaded", progress_node, Thread.PRIORITY_LOW)
 
 
 func _start_generation_threaded(progress: Control) -> void:
@@ -79,41 +84,52 @@ func _start_generation_threaded(progress: Control) -> void:
 	# stage 1
 	progress.set_overall_progress(0, "Generating main landmass")
 	LandmassGenerator.generate_terrain(progress)
+	if single_threaded: yield(get_tree(), "idle_frame")
 	# stage 2
 	progress.set_overall_progress(step_fraction * 1, "Calculating slope")
 	StructureGenerator.generate_flatness_map(progress)
+	if single_threaded: yield(get_tree(), "idle_frame")
 	# stage 3
 	progress.set_overall_progress(step_fraction * 2, "Generating paths")
 	PathfindingGenerator.generate_paths(progress)
+	if single_threaded: yield(get_tree(), "idle_frame")
 	# stage 4
 	progress.set_overall_progress(step_fraction * 3, "Placing structures")
 	StructureGenerator.generate_structures(progress)
+	if single_threaded: yield(get_tree(), "idle_frame")
 	# stage 5
 	progress.set_overall_progress(step_fraction * 4, "Building meshes")
-	generation_threads.resize(number_of_threads)
-	threads_finished = 0
-	var num_of_chunks: int = radius * 2 / CHUNK_SIZE
-	var chunks_per_thread: int = num_of_chunks / number_of_threads
-	progress.set_max_part_progress(num_of_chunks * num_of_chunks)
-	for i in number_of_threads:
-		var t := Thread.new()
-		generation_threads[i] = t
-		t.start(self, "_generate_meshes_multithreaded",
-				[progress,
-				-(num_of_chunks / 2) + (i * chunks_per_thread),
-				-(num_of_chunks / 2) + ((i + 1) * chunks_per_thread),
-				t],
-				#Thread.PRIORITY_HIGH)
-				Thread.PRIORITY_NORMAL)
-				#Thread.PRIORITY_LOW)
-	# wait for all threads to finish generating the mesh
-	while threads_finished != number_of_threads: pass
+	if single_threaded:
+		var chunks_in_r: int = radius / CHUNK_SIZE
+		progress.max_part_progress = chunks_in_r * chunks_in_r * 4
+		LandmassGenerator.generate_mesh_chunks(progress, -chunks_in_r, chunks_in_r)
+	else:
+		generation_threads.resize(number_of_threads)
+		threads_finished = 0
+		var num_of_chunks: int = radius * 2 / CHUNK_SIZE
+		var chunks_per_thread: int = num_of_chunks / number_of_threads
+		progress.set_max_part_progress(num_of_chunks * num_of_chunks)
+		for i in number_of_threads:
+			var t := Thread.new()
+			generation_threads[i] = t
+			t.start(self, "_generate_meshes_multithreaded",
+					[progress,
+					-(num_of_chunks / 2) + (i * chunks_per_thread),
+					-(num_of_chunks / 2) + ((i + 1) * chunks_per_thread),
+					t],
+					#Thread.PRIORITY_HIGH)
+					Thread.PRIORITY_NORMAL)
+					#Thread.PRIORITY_LOW)
+		# wait for all threads to finish generating the mesh
+		while threads_finished != number_of_threads: pass
 	LandmassGenerator.generate_height_collisions()
+	if single_threaded: yield(get_tree(), "idle_frame")
 	# finishing
 	progress.finish_generation()
 	is_generating = false
 	main_scene.set_interface_block(false)
-	generation_thread.call_deferred("wait_to_finish")
+	if not single_threaded:
+		generation_thread.call_deferred("wait_to_finish")
 
 
 #func _start_generation_threaded(progress: Control) -> void:

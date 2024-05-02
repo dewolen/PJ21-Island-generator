@@ -330,12 +330,27 @@ margin_bottom = 20.0
 focus_mode = 0
 text = "Regenerate"
 
+[node name="SingleThreadCB" type="CheckBox" parent="."]
+margin_left = 320.0
+margin_right = 519.0
+margin_bottom = 24.0
+hint_tooltip = "Check this if you have problems with the default multithreaded generation"
+focus_mode = 0
+text = "Single threaded generation"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="ClickBlocker" type="Control" parent="."]
 visible = false
-margin_right = 328.0
+margin_right = 520.0
 margin_bottom = 216.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [connection signal="toggled" from="SlidersContainer/HBC8/SmoothTerrainCB" to="." method="_on_SmoothTerrainCB_toggled"]
 [connection signal="toggled" from="SlidersContainer/HBC8/FirstPersonCB" to="." method="_on_FirstPersonCB_toggled"]
 [connection signal="pressed" from="SlidersContainer/HBC7/GenerateButton" to="." method="_on_GenerateButton_pressed"]
 [connection signal="pressed" from="SlidersContainer/HBC7/RegenerateButton" to="." method="_on_RegenerateButton_pressed"]
+[connection signal="toggled" from="SingleThreadCB" to="." method="_on_SingleThreadCB_toggled"]
