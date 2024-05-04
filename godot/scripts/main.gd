@@ -7,6 +7,7 @@ var is_player_controlled := false
 
 onready var gen_params_interface := $SlidersContainer
 onready var generation_progress := $GenerationProgress
+onready var orbiting_camera := $OrbitingCamera
 
 
 func _ready() -> void:
@@ -17,22 +18,22 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		match event.scancode:
-			KEY_ESCAPE:
-				# mouse capturing
-				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-					# release the mouse
-					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-				else:
-					# capture the mouse
-					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+#			KEY_ESCAPE:
+#				# mouse capturing
+#				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+#					# release the mouse
+#					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+#				else:
+#					# capture the mouse
+#					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			KEY_H:
 				gen_params_interface.visible = not gen_params_interface.visible
 				generation_progress.visible = gen_params_interface.visible
 			KEY_G:
 				GenParams.start_generation()
-			KEY_R:
-				GenParams.randomize_seed()
-				GenParams.start_generation()
+#			KEY_R:
+#				GenParams.randomize_seed()
+#				GenParams.start_generation()
 			KEY_F:
 				set_first_person(not is_player_controlled)
 #				GenParams.start_generation()
@@ -54,20 +55,24 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func set_first_person(enable: bool) -> void:
+	gen_params_interface.first_person_cb.pressed = enable
 	is_player_controlled = enable
-	var camera := $OrbitingCamera
-	camera.disabled = is_player_controlled
-	player.disabled = not is_player_controlled or GenParams.is_generating
+	orbiting_camera.disabled = is_player_controlled
+	set_player_pause(not is_player_controlled)
+	
+	# enable correct camera
 	if is_player_controlled:
 		player.enter_first_person()
 	else:
-		camera.set_as_current()
-	gen_params_interface.first_person_cb.pressed = enable
+		orbiting_camera.set_as_current()
 
 
-func pause_player() -> void:
-	if is_player_controlled:
+func set_player_pause(paused: bool) -> void:
+	if GenParams.is_generating:
 		player.disabled = true
+		return
+	if is_player_controlled:
+		player.disabled = paused
 
 
 func set_interface_block(blocked: bool) -> void:
@@ -76,7 +81,6 @@ func set_interface_block(blocked: bool) -> void:
 
 func _on_GenerationProgress_generation_finished() -> void:
 	# signal deferred
-	if is_player_controlled:
-		player.disabled = false
+	set_player_pause(false)
 	player.translation = Vector3(
 			0, GenParams.landmass_array.get_height(0, 0) * 0.25, 0)

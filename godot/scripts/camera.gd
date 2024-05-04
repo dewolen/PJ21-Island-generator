@@ -11,10 +11,11 @@ var camera_speed := 10
 var mouse_sensitivity := 0.005
 
 onready var camera := $Camera
-onready var debug_label_left_top := $DebugLabelLeftTop
-onready var debug_label_left_bot := $DebugLabelLeftBottom
-onready var debug_label_right_top := $DebugLabelRightTop
-onready var debug_label_right_bot := $DebugLabelRightBottom
+onready var debug_label_top_left := $DebugLabelTopLeft
+onready var debug_label_top_right := $DebugLabelTopRight
+onready var debug_label_bottom_left := $DebugLabelBottomLeft
+onready var debug_label_bottom_right := $DebugLabelBottomRight
+
 
 
 func _set_camera_distance(new_value: float) -> void:
@@ -83,15 +84,20 @@ func _unhandled_input(event: InputEvent) -> void:
 	
 	# detect mouse button press
 	elif event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT:
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-		if freecam: return
 		match event.button_index:
+			BUTTON_LEFT:
+				if event.pressed:
+					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+				else: # BUTTON_LEFT released
+					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 			BUTTON_WHEEL_UP:
+				if freecam: return
 				self.camera_distance -= 1
 			BUTTON_WHEEL_DOWN:
+				if freecam: return
 				self.camera_distance += 1
 
 
 func set_as_current() -> void:
 	camera.current = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)

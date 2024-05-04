@@ -70,12 +70,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		self.look_dir_2d += event.relative * mouse_sensitivity
 	
 	# mouse capturing
-#	elif event is InputEventKey and event.pressed:
-#		match event.scancode:
-#			KEY_ESCAPE:
-#				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-#					# release the mouse
-#					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	elif event is InputEventKey and event.pressed:
+		match event.scancode:
+			KEY_ESCAPE:
+				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+					# release the mouse
+					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 #				else:
 #					# capture the mouse
 #					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -87,3 +87,4 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func enter_first_person() -> void:
 	$CameraOrbit/Camera.current = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)

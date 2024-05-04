@@ -8,14 +8,19 @@ script = ExtResource( 1 )
 [node name="Camera" type="Camera" parent="."]
 far = 300.0
 
-[node name="DebugLabelLeftTop" type="Label" parent="."]
+[node name="DebugLabelTopLeft" type="Label" parent="."]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
-[node name="DebugLabelLeftBottom" type="Label" parent="."]
+[node name="DebugLabelTopRight" type="Label" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+align = 2
+
+[node name="DebugLabelBottomLeft" type="Label" parent="."]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 text = "H - hide GUI"
@@ -24,15 +29,8 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="DebugLabelRightTop" type="Label" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-align = 2
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="DebugLabelRightBottom" type="Label" parent="."]
+[node name="DebugLabelBottomRight" type="Label" parent="."]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 text = "F - toggle first person mode

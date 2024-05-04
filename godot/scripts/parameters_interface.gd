@@ -23,6 +23,9 @@ onready var radius_pow_label := sliders.get_node("HBC6/ValueLabel")
 onready var buildings_label := sliders.get_node("HBC9/ValueLabel")
 onready var paths_label := sliders.get_node("HBC10/ValueLabel")
 
+onready var seed_line_edit := sliders.get_node("HBC11/SeedLineEdit")
+
+
 
 func _ready() -> void:
 	for c in sliders.get_children():
@@ -30,6 +33,10 @@ func _ready() -> void:
 			if s is Range:
 				s.connect("value_changed", self, "_on_slider_value_changed")
 	_on_slider_value_changed(0)
+	GenParams.connect("seed_changed", self, "_on_GenParams_seed_changed")
+	
+	set_block(false)
+	GenParams.randomize_seed()
 	
 #	# preset 2
 #	GenParams.radius = 256
@@ -68,11 +75,7 @@ func _on_FirstPersonCB_toggled(button_pressed: bool) -> void:
 
 
 func _on_GenerateButton_pressed() -> void:
-	GenParams.randomize_seed()
-	GenParams.start_generation()
-
-
-func _on_RegenerateButton_pressed() -> void:
+	seed_line_edit.text = str(GenParams.current_seed) # make sure to display correct seed
 	GenParams.start_generation()
 
 
@@ -82,3 +85,17 @@ func _on_SmoothTerrainCB_toggled(button_pressed: bool) -> void:
 
 func _on_SingleThreadCB_toggled(button_pressed: bool) -> void:
 	GenParams.single_threaded = button_pressed
+
+
+func _on_RandomizeSeedButton_pressed() -> void:
+	GenParams.randomize_seed()
+
+
+func _on_SeedLineEdit_text_changed(new_text: String) -> void:
+	GenParams.current_seed = int(new_text)
+
+
+func _on_GenParams_seed_changed(new_seed: int) -> void:
+	if seed_line_edit.has_focus():
+		return
+	seed_line_edit.text = str(new_seed)

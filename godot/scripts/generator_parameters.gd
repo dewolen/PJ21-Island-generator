@@ -1,10 +1,13 @@
 extends Node
 
 
+signal seed_changed(new_seed)
+
 const MAX_Y_RADIUS := 256
 const CHUNK_SIZE := 32
 const SINGLE_THREAD_PART_DELAY := 0.1
 
+var current_seed: int setget _set_seed
 var radius := 256 setget _set_radius # mininum of CHUNK_SIZE
 var max_height := 32.0 setget _set_max_height
 var number_of_threads := ceil(radius as float / CHUNK_SIZE / 2.0)
@@ -25,6 +28,15 @@ var progress_node: Control
 var is_generating := false
 
 onready var main_scene: Spatial = get_tree().current_scene
+
+
+func _set_seed(new_value: int) -> void:
+	if current_seed == new_value: return
+	current_seed = new_value & 0xFFFFFFFF # make sure it's 32-bit
+	landmass_noise.seed = current_seed
+	# shift the bits 4 to the left with wrap-around
+	biome_noise.seed = ((current_seed << 4) & (~0xF)) | ((current_seed >> 28) & 0xF)
+	emit_signal("seed_changed", current_seed)
 
 
 func _set_radius(new_value: int) -> void:
@@ -66,7 +78,7 @@ func start_generation() -> void:
 	
 	is_generating = true
 	main_scene.set_interface_block(true)
-	main_scene.pause_player()
+	main_scene.set_player_pause(true)
 	GenParams.reset()
 	LandmassGenerator.reset()
 	StructureGenerator.reset()
@@ -157,12 +169,4 @@ func _thread_finished_generation(thread: Thread) -> void:
 
 
 func randomize_seed() -> void:
-	set_seed(randi())
-
-
-func set_seed(new_seed: int) -> void:
-	# make sure it's 32-bit
-	new_seed = new_seed & 0xFFFFFFFF
-	landmass_noise.seed = new_seed
-	# shift the bits 4 to the left with wrap-around
-	biome_noise.seed = ((new_seed << 4) & (~0xF)) | ((new_seed >> 28) & 0xF)
+	self.current_seed = randi()
