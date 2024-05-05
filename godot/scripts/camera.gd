@@ -2,6 +2,7 @@ extends Spatial
 
 
 signal camera_moved(new_pos)
+signal mouse_captured
 
 export var camera_distance := 0.0 setget _set_camera_distance
 export var freecam := false setget _set_freecam
@@ -88,6 +89,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			BUTTON_LEFT:
 				if event.pressed:
 					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+					emit_signal("mouse_captured")
 				else: # BUTTON_LEFT released
 					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 			BUTTON_WHEEL_UP:

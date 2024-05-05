@@ -99,3 +99,14 @@ func _on_GenParams_seed_changed(new_seed: int) -> void:
 	if seed_line_edit.has_focus():
 		return
 	seed_line_edit.text = str(new_seed)
+
+
+func _on_camera_mouse_captured() -> void:
+	var focus_owner := get_focus_owner()
+	if focus_owner:
+		focus_owner.release_focus()
+
+
+func _on_ExportMeshButton_pressed() -> void:
+	var exporter_window := $ExportMeshButton/IslandExporter
+	exporter_window.popup_centered()

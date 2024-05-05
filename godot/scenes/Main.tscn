@@ -68,3 +68,5 @@ shape = SubResource( 3 )
 disabled = true
 
 [connection signal="generation_finished" from="GenerationProgress" to="." method="_on_GenerationProgress_generation_finished" flags=3]
+[connection signal="mouse_captured" from="OrbitingCamera" to="SlidersContainer" method="_on_camera_mouse_captured"]
+[connection signal="mouse_captured" from="Player" to="SlidersContainer" method="_on_camera_mouse_captured"]

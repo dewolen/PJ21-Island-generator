@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://scripts/parameters_interface.gd" type="Script" id=1]
 [ext_resource path="res://icons/RandomNumberGenerator.svg" type="Texture" id=2]
+[ext_resource path="res://scenes/IslandExporter.tscn" type="PackedScene" id=3]
 
 [node name="ParametersInterface" type="Control"]
 anchor_right = 1.0
@@ -324,6 +325,7 @@ margin_left = 39.0
 margin_right = 288.0
 margin_bottom = 24.0
 hint_tooltip = "An integer number between 0 and 4,294,967,295"
+focus_mode = 1
 size_flags_horizontal = 3
 align = 2
 placeholder_text = "32-bit unsigned integer"
@@ -333,6 +335,7 @@ margin_left = 292.0
 margin_right = 320.0
 margin_bottom = 24.0
 hint_tooltip = "Randomize the seed"
+focus_mode = 0
 icon = ExtResource( 2 )
 
 [node name="HBC7" type="HBoxContainer" parent="SlidersContainer"]
@@ -370,11 +373,26 @@ align = 2
 valign = 2
 
 [node name="ClickBlocker" type="Control" parent="."]
+visible = false
 margin_right = 522.0
 margin_bottom = 241.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="ExportMeshButton" type="Button" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+margin_top = -20.0
+margin_right = 152.0
+focus_mode = 0
+text = "Export island mesh"
+
+[node name="IslandExporter" parent="ExportMeshButton" instance=ExtResource( 3 )]
+margin_left = 183.0
+margin_top = -445.0
+margin_right = 725.0
+margin_bottom = -121.0
 
 [connection signal="toggled" from="SlidersContainer/HBC8/SmoothTerrainCB" to="." method="_on_SmoothTerrainCB_toggled"]
 [connection signal="toggled" from="SlidersContainer/HBC8/FirstPersonCB" to="." method="_on_FirstPersonCB_toggled"]
@@ -382,3 +400,4 @@ __meta__ = {
 [connection signal="pressed" from="SlidersContainer/HBC11/RandomizeSeedButton" to="." method="_on_RandomizeSeedButton_pressed"]
 [connection signal="pressed" from="SlidersContainer/HBC7/GenerateButton" to="." method="_on_GenerateButton_pressed"]
 [connection signal="toggled" from="SingleThreadCB" to="." method="_on_SingleThreadCB_toggled"]
+[connection signal="pressed" from="ExportMeshButton" to="." method="_on_ExportMeshButton_pressed"]

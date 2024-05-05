@@ -1,6 +1,8 @@
 extends PhysicsAgent
 
 
+signal mouse_captured
+
 var movement_speed := 4.0
 var jump_velocity := 5.0
 var mouse_sensitivity := 0.005
@@ -82,6 +84,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	
 	elif event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT:
+			emit_signal("mouse_captured")
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
