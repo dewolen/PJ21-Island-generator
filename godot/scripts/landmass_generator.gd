@@ -2,6 +2,9 @@ extends Node
 # landmass generator
 
 
+const VERTEX_COLOR_MATERIAL := preload("res://materials/vertex_color_mat.tres")
+const SAND_MATERIAL := preload("res://materials/sand_mat.tres")
+
 var meshes_container: Spatial
 var biome_colors := preload("res://resources/biome_colors.tres")
 var height_colors := preload("res://resources/height_gradient.tres")
@@ -114,8 +117,8 @@ func generate_height_collisions() -> void:
 		# outside island seabed
 		var mi := MeshInstance.new()
 		mi.mesh = pm
-		mi.name = "Seabed"
-		mi.material_override = preload("res://materials/sand_mat.tres")
+		mi.name = "Seabed" + str(i)
+		mi.material_override = SAND_MATERIAL
 		mi.scale = Vector3.ONE * 0.25
 		mi.translation = Vector3(500, seabed_h, GenParams.radius + 499).rotated(
 				Vector3.UP, PI * i / 2.0) * 0.25
@@ -227,7 +230,7 @@ func add_chunk(st: SurfaceTool, offset := Vector3.ZERO) -> void:
 	var mi := MeshInstance.new()
 	#mi.name = "Landmass"
 	mi.mesh = st.commit()
-	mi.material_override = preload("res://materials/vertex_color_mat.tres")
+	mi.material_override = VERTEX_COLOR_MATERIAL
 #	var sm := SpatialMaterial.new()
 #	sm.albedo_color = Color(randf(), randf(), randf())
 #	sm.vertex_color_use_as_albedo = true

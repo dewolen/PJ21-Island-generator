@@ -8,10 +8,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -271.0
-margin_top = -162.0
-margin_right = 271.0
-margin_bottom = 162.0
+margin_left = -178.0
+margin_top = -84.0
+margin_right = 178.0
+margin_bottom = 84.0
 window_title = "Export island mesh"
 script = ExtResource( 1 )
 
@@ -23,20 +23,54 @@ margin_top = 5.0
 margin_right = -5.0
 margin_bottom = -5.0
 
-[node name="Label" type="Label" parent="VBC"]
-margin_top = 138.0
-margin_right = 532.0
-margin_bottom = 152.0
+[node name="InfoLabel" type="Label" parent="VBC"]
+margin_top = 51.0
+margin_right = 346.0
+margin_bottom = 82.0
 size_flags_vertical = 6
-text = "Not yet implemented"
+text = "Export the island as a mesh in the OBJ file format
+Choose the save directory"
 align = 1
+autowrap = true
 
-[node name="ExportButton" type="Button" parent="VBC"]
-margin_left = 240.0
-margin_top = 294.0
-margin_right = 292.0
-margin_bottom = 314.0
+[node name="ExportProgressBar" type="ProgressBar" parent="VBC"]
+visible = false
+margin_top = 120.0
+margin_right = 346.0
+margin_bottom = 134.0
+max_value = 1.0
+
+[node name="OpenDirectoryButton" type="Button" parent="VBC"]
+visible = false
+margin_left = 96.0
+margin_top = 114.0
+margin_right = 249.0
+margin_bottom = 134.0
 size_flags_horizontal = 6
 size_flags_vertical = 8
-disabled = true
-text = "Export"
+text = "Open export directory"
+
+[node name="ExportButton" type="Button" parent="VBC"]
+margin_left = 77.0
+margin_top = 138.0
+margin_right = 269.0
+margin_bottom = 158.0
+size_flags_horizontal = 6
+size_flags_vertical = 8
+text = "Choose directory and export"
+
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_left = 662.0
+margin_top = -3.0
+margin_right = 1121.0
+margin_bottom = 285.0
+window_title = "Choose the save directory"
+resizable = true
+mode_overrides_title = false
+mode = 2
+access = 2
+
+[connection signal="about_to_show" from="." to="." method="_on_IslandExporter_about_to_show"]
+[connection signal="pressed" from="VBC/OpenDirectoryButton" to="." method="_on_OpenDirectoryButton_pressed"]
+[connection signal="pressed" from="VBC/ExportButton" to="." method="_on_ExportButton_pressed"]
+[connection signal="dir_selected" from="FileDialog" to="." method="_on_FileDialog_dir_selected"]
