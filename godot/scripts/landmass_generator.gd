@@ -96,11 +96,13 @@ func generate_height_collisions() -> void:
 	sb.rotation_degrees = Vector3(0, -90, 0)
 	sb.scale = Vector3(0.25, 0.25, -0.25)
 	sb.add_child(cs)
+	sb.name = "IslandGround"
 	meshes_container.add_child(sb)
 	
 	var seabed_h := floor(get_transformed_noise(GenParams.radius, GenParams.radius))
 	var mb_sb := StaticBody.new()
 	mb_sb.translation = Vector3(-0.125, 0, -0.125)
+	mb_sb.name = "EdgeWalls"
 	meshes_container.add_child(mb_sb)
 	var mb_bs := BoxShape.new() # border shape
 	mb_bs.extents = Vector3(GenParams.radius, -seabed_h, 1.0) * 0.25

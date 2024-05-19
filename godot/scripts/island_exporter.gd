@@ -1,13 +1,24 @@
 extends WindowDialog
 
 
-var object_name := "Island"
-var mesh: Mesh = null
+signal file_content_generated
 
-var _objcont := "" #.obj content
-var _matcont := "" #.mat content
+const OBJ_HEADER = \
+"""# exported from island-generator made by dewolen
+# dewolen.itch.io/island-generator
+"""
+
+
+var object_name := "Island"
+
+var _objcont := "" # .obj file content
+var _matcont := "" # .mat file content
+
 var _default_message: String # default message in the InfoLabel
 var _export_directory: String
+var _full_export_path: String
+
+var _gen_thread: Thread = null # generates file contents to be saved
 
 onready var file_dialog := $FileDialog
 onready var info_label := $VBC/InfoLabel
@@ -18,6 +29,8 @@ onready var export_progress_bar := $VBC/ExportProgressBar
 func _ready() -> void:
 	_default_message = info_label.text
 	open_directory_button.hide()
+	
+	connect("file_content_generated", self, "_on_file_content_generated", [], CONNECT_DEFERRED)
 
 
 func _on_ExportButton_pressed() -> void:
@@ -33,9 +46,9 @@ func _on_OpenDirectoryButton_pressed() -> void:
 
 func _on_FileDialog_dir_selected(path: String) -> void:
 	var time_dict := Time.get_datetime_dict_from_system()
-	var folder_name := "island_export_{day}{month}{year}_{hour}{minute}{second}" \
+	var folder_name := "island_export_{day}-{month}-{year}_{hour}-{minute}-{second}" \
 		.format(time_dict)
-	var full_folder_path := path.plus_file(folder_name)
+	_full_export_path = path.plus_file(folder_name)
 	
 	var meshes_container = get_tree().current_scene.get_node("TerrainMeshes")
 	if not meshes_container is Node:
@@ -47,23 +60,29 @@ func _on_FileDialog_dir_selected(path: String) -> void:
 		return
 	
 	display_message("Exporting mesh to:\n[{path}]\n\nPlease wait" \
-		.format({"path": full_folder_path}))
-	yield(get_tree().create_timer(0.1), "timeout")
+		.format({"path": _full_export_path}))
 	
-	get_aggregate_mesh(meshes_container.get_children(), true)
-	generate_file_contents()
+	var mesh = get_aggregate_mesh(meshes_container.get_children(), false)
 	
+	_gen_thread = Thread.new()
+	_gen_thread.start(self, "generate_file_contents", mesh)
+#	_gen_thread.start(self, "generate_file_contents", meshes_container.get_children())
+
+
+func _on_file_content_generated() -> void:
 	
-	
-	var err := export_files_to(full_folder_path)
+	var err := export_files_to(_full_export_path)
 	if err:
 		display_message("Export failiure, error code: {err}\nPath: [{path}]" \
-			.format({"path": full_folder_path, "err": err}))
+			.format({"path": _full_export_path, "err": err}))
 		return
 	
 	display_message("Mesh exported to:\n[{path}]" \
-		.format({"path": full_folder_path}))
-	display_open_export_directory_button(full_folder_path)
+		.format({"path": _full_export_path}))
+	display_open_export_directory_button(_full_export_path)
+	
+#	if _gen_thread.is_active():
+#		_gen_thread.wait_to_finish() # make sure the thread is dead
 
 
 func get_aggregate_mesh(mi_array: Array, use_node_transform := true) -> Mesh:
@@ -71,7 +90,7 @@ func get_aggregate_mesh(mi_array: Array, use_node_transform := true) -> Mesh:
 	
 	var meshes := []
 	var transforms := []
-	var surface_count := 0 # max surface count
+	var max_surface_count := 0
 	for mi in mi_array:
 		if not mi is MeshInstance:
 			continue
@@ -79,7 +98,7 @@ func get_aggregate_mesh(mi_array: Array, use_node_transform := true) -> Mesh:
 			continue
 		meshes.append(mi.mesh)
 		transforms.append(mi.global_transform)
-		surface_count = max(mi.mesh.get_surface_count(), surface_count)
+		max_surface_count = max(mi.mesh.get_surface_count(), max_surface_count)
 	
 	var st := SurfaceTool.new()
 	
@@ -114,21 +133,48 @@ func get_aggregate_mesh(mi_array: Array, use_node_transform := true) -> Mesh:
 	return st.commit()
 
 
-func generate_file_contents() -> void:
+func generate_file_contents(meshes) -> void:
 	# Based on a script by: mohammedzero43 (Xtremezero)
 	# https://github.com/xtremezero/CSGExport-Godot
-	if not mesh:
+	
+	#mesh: Mesh, MeshInstance, Mesh Array or MeshInstance Array
+	if not meshes:
+		print("No mesh to export!")
+		return
+	
+	if not meshes is Array:
+		meshes = [meshes]
+	
+	var transforms := []
+	transforms.resize(meshes.size())
+	if meshes[0] is Node:
+		var i := 0
+		while i < meshes.size():
+			# remove all non-MeshInstances and seabed meshes
+			if not meshes[i] is MeshInstance \
+			or meshes[i].name.begins_with("Seabed"):
+				meshes.remove(i)
+				transforms.pop_back() # decrease size by one
+				continue
+			transforms[i] = meshes[i].transform
+			meshes[i] = meshes[i].mesh
+			# meshes is now a Mesh Array
+			i += 1
+	elif meshes[0] is Mesh:
+		# meshes is already a Mesh Array
+		transforms.fill(Transform())
+	else:
 		print("No mesh to export!")
 		return
 	
 	# variables
-	_objcont = "" # .obj content
-	_matcont = "" # .mat content
-	var vertcount := 0
+	_objcont = ""
+	_matcont = ""
+	var vertcount := 1 # set to 1 because .obj indexing starts at 1, not 0
+	var used_materials := []
 	
 	# OBJ Headers
-	_objcont += "# exported from island-generator by dewolen\n"
-	_objcont += "# dewolen.itch.io/island-generator\n"
+	_objcont = OBJ_HEADER
 	_objcont += "mtllib " + object_name + ".mtl\n"
 	_objcont += "o " + object_name + "\n"
 	
@@ -136,128 +182,115 @@ func generate_file_contents() -> void:
 	var blank_material := SpatialMaterial.new()
 	blank_material.resource_name = "BlankMaterial"
 	
+	if meshes.size() > 1: # display progress only when exporting multiple meshes
+		set_generation_progress(0.0)
+	yield(get_tree().create_timer(0.1), "timeout")
+	
 	# get surfaces and mesh info
-	for t in mesh.get_surface_count():
-		var surface := mesh.surface_get_arrays(t)
-		var verts: PoolVector3Array = surface[ArrayMesh.ARRAY_VERTEX]
-		var normals                 = surface[ArrayMesh.ARRAY_NORMAL]
-#		var tangents                = surface[ArrayMesh.ARRAY_TANGENT]
-#		var colors                  = surface[ArrayMesh.ARRAY_COLOR]
-		var UVs                     = surface[ArrayMesh.ARRAY_TEX_UV]
-#		var UV2s                    = surface[ArrayMesh.ARRAY_TEX_UV2]
-#		var bones                   = surface[ArrayMesh.ARRAY_BONES]
-#		var weights                 = surface[ArrayMesh.ARRAY_WEIGHTS]
-		var indices                 = surface[ArrayMesh.ARRAY_INDEX]
+	for im in meshes.size():
+		var mesh: Mesh = meshes[im]
+		for t in mesh.get_surface_count():
+			var surface: Array = mesh.surface_get_arrays(t)
+			var verts: PoolVector3Array = surface[ArrayMesh.ARRAY_VERTEX]
+			var normals                 = surface[ArrayMesh.ARRAY_NORMAL]
+#			var tangents                = surface[ArrayMesh.ARRAY_TANGENT]
+#			var colors                  = surface[ArrayMesh.ARRAY_COLOR]
+			var UVs                     = surface[ArrayMesh.ARRAY_TEX_UV]
+#			var UV2s                    = surface[ArrayMesh.ARRAY_TEX_UV2]
+#			var bones                   = surface[ArrayMesh.ARRAY_BONES]
+#			var weights                 = surface[ArrayMesh.ARRAY_WEIGHTS]
+			var indices                 = surface[ArrayMesh.ARRAY_INDEX]
+			
+			var line := 0
+			var surfcont := PoolStringArray()
+			var surfcont_size: int = verts.size() + 2
+			if normals:
+				surfcont_size += normals.size()
+			if UVs:
+				surfcont_size += UVs.size()
+			surfcont_size += (indices.size() if indices else verts.size()) / 3
+			surfcont.resize(surfcont_size)
+			
+			var mat: SpatialMaterial = mesh.surface_get_material(t)
+			if mat == null:
+				mat = blank_material
+			
+			# add verticies
+			for v in verts:
+				surfcont[line] = str("v ", v.x, " ", v.y, " ", v.z)
+				line += 1
+			
+			# add UVs
+			if UVs:
+				for uv in UVs:
+					surfcont[line] = str("vt ", uv.x, " ", uv.y)
+					line += 1
+			
+			# add normals
+			if normals:
+				for n in normals:
+					surfcont[line] = str("vn ", n.x, " ", n.y, " ", n.z)
+					line += 1
+			
+			# add surface
+			surfcont[line] = "\ng obj" + str(im) + "_surface" + str(t)
+			line += 1
+			
+			# add material
+			surfcont[line] = "\nusemtl " + str(mat)
+			line += 1
+			
+			# create the index Array if none defined
+			if not indices:
+				indices = PoolIntArray()
+				indices.resize(verts.size())
+				for i in indices.size():
+					indices[i] = i
+			
+			# add faces
+			var vstart := 0
+			var face_def_v1 := ""
+			var face_def_v2 := ""
+			var face_def_v3 := ""
+			var normal_separator := "/" if UVs else "//"
+			for face in indices.size() / 3:
+				# vertex_index/texture_index/normal_index
+				face_def_v1 = str(indices[vstart + 2] + vertcount)
+				face_def_v2 = str(indices[vstart + 1] + vertcount)
+				face_def_v3 = str(indices[vstart    ] + vertcount)
+				if UVs:
+					face_def_v1 += "/" + str(indices[vstart + 2] + vertcount)
+					face_def_v2 += "/" + str(indices[vstart + 1] + vertcount)
+					face_def_v3 += "/" + str(indices[vstart    ] + vertcount)
+				if normals:
+					face_def_v1 += normal_separator + str(indices[vstart + 2] + vertcount)
+					face_def_v2 += normal_separator + str(indices[vstart + 1] + vertcount)
+					face_def_v3 += normal_separator + str(indices[vstart    ] + vertcount)
+				# example face definition: f 1/1/1 2/2/2 3/3/3
+				# either as v OR v/vt OR v/vt/vn OR v//vn
+				surfcont[line] = "f " + face_def_v1 + " " + face_def_v2 + " " + face_def_v3
+				vstart += 3
+				line += 1
+			_objcont += surfcont.join("\n") + "\n"
+			
+			# add number of vertices in this surface to total count
+			vertcount += verts.size()
+			
+			# create materials for current surface
+			if not mat in used_materials:
+				_matcont += str("newmtl " + str(mat), "\n")
+				_matcont += str("Kd ", mat.albedo_color.r, " ", mat.albedo_color.g, " ", mat.albedo_color.b, "\n")
+#				_matcont += str("Ke ", mat.emission.r, " ", mat.emission.g, " ", mat.emission.b, "\n")
+#				_matcont += str("Tf ", mat.transmission.r, " ", mat.transmission.g, " ", mat.transmission.b, "\n")
+#				_matcont += str("d ", mat.albedo_color.a, "\n")
+				used_materials.append(mat)
 		
-		var mat: SpatialMaterial = mesh.surface_get_material(t)
-		if mat == null:
-			mat = blank_material
-		
-		# add verticies
-		for v in verts:
-			_objcont += str("v ", v.x, " ", v.y, " ", v.z, "\n")
-		
-		# add UVs
-		if UVs:
-			for uv in UVs:
-				_objcont += str("vt ", uv.x, " ", uv.y, "\n")
-		elif normals:
-			# normal data defined but no UV data, add three dummy UV coordinates
-			_objcont += "vt 0 0\nvt 0 0\nvt 0 0\n"
-		
-		# add normals
-		if normals:
-			for n in normals:
-				_objcont += str("vn ", n.x, " ", n.y, " ", n.z, "\n")
-		
-		# add surface
-		_objcont += "g surface" + str(t) + "\n"
-		
-		# add material
-		_objcont += "usemtl " + str(mat) + "\n"
-		
-		# add faces
-		if indices: # indexed array
-			var vstart     := 0
-			var vert_index := vstart
-			var uv_index   := 0
-			var n_index    := 0
-			if normals: # normals and maybe UVs:
-				for face in indices.size() / 3:
-					vert_index = vstart
-					if UVs: uv_index = vstart # UV data defined
-					n_index  = vstart
-					_objcont += str( # vertex_index/texture_index/normal_index
-						"f ", indices[vert_index]     + 1, "/", indices[uv_index]     + 1, "/", indices[n_index]     + 1,
-						" ",  indices[vert_index + 1] + 1, "/", indices[uv_index + 1] + 1, "/", indices[n_index + 1] + 1,
-						" ",  indices[vert_index + 2] + 1, "/", indices[uv_index + 2] + 1, "/", indices[n_index + 2] + 1,
-						"\n")
-					vstart += 3
-			elif UVs: # UVs and no normals
-				for face in indices.size() / 3:
-					vert_index = vstart
-					uv_index = vstart
-					_objcont += str( # vertex_index/texture_index
-						"f ", indices[vert_index]     + 1, "/", indices[uv_index]     + 1,
-						" ",  indices[vert_index + 1] + 1, "/", indices[uv_index + 1] + 1,
-						" ",  indices[vert_index + 2] + 1, "/", indices[uv_index + 2] + 1,
-						"\n")
-					vstart += 3
-			else: # no UVs, no normals
-				for face in indices.size() / 3:
-					vert_index = vstart
-					_objcont += str( # vertex_index
-						"f ", indices[vert_index]     + 1,
-						" ",  indices[vert_index + 1] + 1,
-						" ",  indices[vert_index + 2] + 1,
-						"\n")
-					vstart += 3
-		
-		else: # non-indexed array
-			var vstart     := 1 + vertcount
-			var vert_index := vstart
-			var uv_index   := 1
-			var n_index    := 1
-			if normals: # normals and maybe UVs:
-				for face in verts.size() / 3:
-					vert_index = vstart
-					if UVs: uv_index = vstart # UV data defined
-					n_index  = vstart
-					_objcont += str( # vertex_index/texture_index/normal_index
-						"f ", vert_index + 2, "/", uv_index + 2, "/", n_index + 2,
-						" ",  vert_index + 1, "/", uv_index + 1, "/", n_index + 1,
-						" ",  vert_index,     "/", uv_index,     "/", n_index,
-						"\n")
-					vstart += 3
-			elif UVs: # UVs and no normals
-				for face in verts.size() / 3:
-					vert_index = vstart
-					uv_index = vstart
-					_objcont += str( # vertex_index/texture_index
-						"f ", vert_index + 2, "/", uv_index + 2,
-						" ",  vert_index + 1, "/", uv_index + 1,
-						" ",  vert_index,     "/", uv_index,
-						"\n")
-					vstart += 3
-			else: # no UVs, no normals
-				for face in verts.size() / 3:
-					vert_index = vstart
-					_objcont += str( # vertex_index
-						"f ", vert_index + 2,
-						" ",  vert_index + 1,
-						" ",  vert_index,
-						"\n")
-					vstart += 3
-		
-		# add number of vertices in this surface to total count
-		vertcount += verts.size()
-		
-		# create materials for current surface
-		_matcont += str("newmtl " + str(mat), "\n")
-		_matcont += str("Kd ", mat.albedo_color.r, " ", mat.albedo_color.g, " ", mat.albedo_color.b, "\n")
-#		_matcont += str("Ke ", mat.emission.r, " ", mat.emission.g, " ", mat.emission.b, "\n")
-#		_matcont += str("Tf ", mat.transmission.r, " ", mat.transmission.g, " ", mat.transmission.b, "\n")
-#		_matcont += str("d ", mat.albedo_color.a, "\n")
+		if meshes.size() > 1: # display progress only when exporting multiple meshes
+			set_generation_progress(im as float / meshes.size())
+			yield(get_tree().create_timer(0.1), "timeout")
+	
+	set_generation_progress(1.0) # finish
+	_gen_thread.call_deferred("wait_to_finish")
 
 
 func export_files_to(path: String) -> int:
@@ -286,6 +319,10 @@ func export_files_to(path: String) -> int:
 	file.store_string(_matcont)
 	file.close()
 	
+	# clear buffers
+	_objcont = ""
+	_matcont = ""
+	
 	return OK
 
 
@@ -306,3 +343,12 @@ func display_open_export_directory_button(path := "") -> void:
 
 func _on_IslandExporter_about_to_show() -> void:
 	display_message() # reset the message to the default
+	display_open_export_directory_button() # hide the button
+
+
+func set_generation_progress(percentage: float) -> void:
+	export_progress_bar.call_deferred("show")
+	export_progress_bar.set_deferred("value", percentage)
+	if percentage >= 1.0:
+		export_progress_bar.call_deferred("hide")
+		emit_signal("file_content_generated")
