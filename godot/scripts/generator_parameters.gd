@@ -26,6 +26,7 @@ var generation_threads := []
 var threads_finished: int
 var progress_node: Control
 var is_generating := false
+var previous_parameters: Dictionary
 
 onready var main_scene: Spatial = get_tree().current_scene
 
@@ -41,7 +42,7 @@ func _set_seed(new_value: int) -> void:
 
 func _set_radius(new_value: int) -> void:
 	if radius == new_value: return
-	radius = new_value
+	radius = max(new_value, CHUNK_SIZE)
 	update_arrays()
 
 
@@ -76,6 +77,7 @@ func reset() -> void:
 func start_generation() -> void:
 	if generation_thread.is_active(): return
 	
+	previous_parameters = get_parameters_as_dict()
 	is_generating = true
 	main_scene.set_interface_block(true)
 	main_scene.set_player_pause(true)
@@ -170,3 +172,14 @@ func _thread_finished_generation(thread: Thread) -> void:
 
 func randomize_seed() -> void:
 	self.current_seed = randi()
+
+
+func get_parameters_as_dict() -> Dictionary:
+	return {
+		"MAX_Y_RADIUS": MAX_Y_RADIUS,
+		"CHUNK_SIZE": CHUNK_SIZE,
+		"current_seed": current_seed,
+		"radius": radius,
+		"max_height": max_height,
+		"flatness_map_scale_pow": flatness_map_scale_pow,
+	}
