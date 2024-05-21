@@ -82,6 +82,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 					# release the mouse
 					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+					GenParams.main_scene.set_interface_block(false)
 #				else:
 #					# capture the mouse
 #					Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)

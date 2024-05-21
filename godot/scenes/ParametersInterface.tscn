@@ -367,7 +367,7 @@ anchor_bottom = 1.0
 margin_left = 512.0
 margin_top = 300.0
 text = "F - toggle first person mode
-G - regenerate
+G - generate
 H - hide the interface"
 align = 2
 valign = 2
