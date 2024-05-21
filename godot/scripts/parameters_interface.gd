@@ -45,8 +45,8 @@ func _ready() -> void:
 		export_mesh_button.hide()
 		# force single-threaded mode, needed when the HTML5 export type
 		# is set to regular instead of threads
-#		single_thread_cb.pressed = true
-#		single_thread_cb.hide()
+		single_thread_cb.pressed = true
+		single_thread_cb.hide()
 	
 #	# preset 2
 #	GenParams.radius = 256
@@ -82,6 +82,7 @@ func _on_slider_value_changed(_value: float) -> void:
 
 func _on_FirstPersonCB_toggled(button_pressed: bool) -> void:
 	get_node("/root/Main").set_first_person(button_pressed)
+	GenParams.main_scene.set_interface_block(button_pressed)
 
 
 func _on_GenerateButton_pressed() -> void:

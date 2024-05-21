@@ -36,6 +36,7 @@ func _unhandled_input(event: InputEvent) -> void:
 #				GenParams.start_generation()
 			KEY_F:
 				set_first_person(not is_player_controlled)
+				set_interface_block(is_player_controlled)
 #				GenParams.start_generation()
 #			KEY_B:
 #				GenParams.landmass_array.debug_visualize_height_data()

@@ -63,16 +63,20 @@ func _physics_process(_delta: float) -> void:
 				0, GenParams.landmass_array.get_height(0, 0) * 0.25, 0)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if disabled: return
 	
 	# camera look-around
 	if event is InputEventMouseMotion \
 	and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		self.look_dir_2d += event.relative * mouse_sensitivity
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if disabled: return
 	
 	# mouse capturing
-	elif event is InputEventKey and event.pressed:
+	if event is InputEventKey and event.pressed:
 		match event.scancode:
 			KEY_ESCAPE:
 				if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
