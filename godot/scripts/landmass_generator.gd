@@ -154,7 +154,7 @@ func get_gradient_color(x: int, z: int, surface_color := Color()) -> Color:
 	var h_color := height_colors.interpolate(h + (bn / 10.0))
 	if surface_color:
 		h_color.a *= 0.5
-	else:
+	else: # black
 		surface_color = biome_colors.interpolate(bn)
 	return surface_color.blend(h_color)
 

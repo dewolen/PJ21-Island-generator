@@ -13,6 +13,8 @@ var object_name := "Island"
 
 var _objcont := "" # .obj file content
 var _matcont := "" # .mat file content
+var _textures_list := {} # key: texture name, value: Texture object
+var _ground_image: Image # a top-down projection of the mesh's vertex colors
 
 var _default_message: String # default message in the InfoLabel
 var _export_directory: String
@@ -100,34 +102,67 @@ func get_aggregate_mesh(mi_array: Array, use_node_transform := true) -> Mesh:
 		transforms.append(mi.global_transform)
 		max_surface_count = max(mi.mesh.get_surface_count(), max_surface_count)
 	
-	var st := SurfaceTool.new()
+	# create the UV transform to change the XZ vertex
+	# coordinates ranging in [-radius, radius] to texture
+	# UV coordinates ranging in [0, 1]
+	var radius: float = GenParams.previous_parameters["radius"]
+	var uv_transform := Transform2D(
+		Vector2(0.5 / radius, 0.0),
+		Vector2(0.0, 0.5 / radius),
+		Vector2(0.5, 0.5)
+	)
 	
+	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var img := Image.new()
+	img.create(radius * 2, radius * 2, false, Image.FORMAT_RGB8)
+	img.lock()
+	var img_written_to := false
+	
 	for im in meshes.size():
 		# get surfaces and mesh info
-#		for t in mesh.get_surface_count():
-		var surface: Array = meshes[im].surface_get_arrays(0)
-		var verts: PoolVector3Array = surface[ArrayMesh.ARRAY_VERTEX]
-		var normals                 = surface[ArrayMesh.ARRAY_NORMAL]
-#		var tangents                = surface[ArrayMesh.ARRAY_TANGENT]
-		var colors                  = surface[ArrayMesh.ARRAY_COLOR]
-		var UVs                     = surface[ArrayMesh.ARRAY_TEX_UV]
-#		var UV2s                    = surface[ArrayMesh.ARRAY_TEX_UV2]
-#		var bones                   = surface[ArrayMesh.ARRAY_BONES]
-#		var weights                 = surface[ArrayMesh.ARRAY_WEIGHTS]
-#		var indices                 = surface[ArrayMesh.ARRAY_INDEX]
-		
-		for iv in verts.size():
-			if normals:
-				st.add_normal(normals[iv])
+		for t in meshes[im].get_surface_count():
+			var surface: Array = meshes[im].surface_get_arrays(t)
+			var verts: PoolVector3Array = surface[ArrayMesh.ARRAY_VERTEX]
+			var normals                 = surface[ArrayMesh.ARRAY_NORMAL]
+#			var tangents                = surface[ArrayMesh.ARRAY_TANGENT]
+			var colors                  = surface[ArrayMesh.ARRAY_COLOR]
+			var UVs                     = surface[ArrayMesh.ARRAY_TEX_UV]
+#			var UV2s                    = surface[ArrayMesh.ARRAY_TEX_UV2]
+#			var bones                   = surface[ArrayMesh.ARRAY_BONES]
+#			var weights                 = surface[ArrayMesh.ARRAY_WEIGHTS]
+#			var indices                 = surface[ArrayMesh.ARRAY_INDEX]
+			
+			for iv in verts.size():
+				if normals:
+					st.add_normal(normals[iv])
+				
+#				if colors:
+#					st.add_color(colors[iv])
+				
+				if UVs:
+					st.add_uv(UVs[iv])
+				else:
+					# create uv coordinates as a top-down texture projection
+					st.add_uv(uv_transform.xform(Vector2(verts[iv].x, -verts[iv].z)))
+				
+				if use_node_transform:
+					st.add_vertex(transforms[im].xform(verts[iv]))
+				else:
+					st.add_vertex(verts[iv])
+			
 			if colors:
-				st.add_color(colors[iv])
-			if UVs:
-				st.add_uv(UVs[iv])
-			if use_node_transform:
-				st.add_vertex(transforms[im].xform(verts[iv]))
-			else:
-				st.add_vertex(verts[iv])
+				# every island mesh quad is made out of two triangles/six
+				# vertices, this gets color from each quad once
+				for iv in verts.size() / 6:
+					img.set_pixel(verts[iv * 6].x + radius, verts[iv * 6].z + radius, colors[iv * 6])
+				# problem: pixels not overlapped by a vertex will be left blank
+				img_written_to = true
+	
+	img.unlock()
+	if img_written_to:
+		_ground_image = img
 	
 	st.index()
 	return st.commit()
@@ -170,6 +205,7 @@ func generate_file_contents(meshes) -> void:
 	# variables
 	_objcont = ""
 	_matcont = ""
+	_textures_list = {}
 	var vertcount := 1 # set to 1 because .obj indexing starts at 1, not 0
 	var used_materials := []
 	
@@ -178,9 +214,9 @@ func generate_file_contents(meshes) -> void:
 	_objcont += "mtllib " + object_name + ".mtl\n"
 	_objcont += "o " + object_name + "\n"
 	
-	# blank material
-	var blank_material := SpatialMaterial.new()
-	blank_material.resource_name = "BlankMaterial"
+	# default material
+	var default_material := SpatialMaterial.new()
+	default_material.resource_name = "DefaultMaterial"
 	
 	if meshes.size() > 1: # display progress only when exporting multiple meshes
 		set_generation_progress(0.0)
@@ -213,7 +249,7 @@ func generate_file_contents(meshes) -> void:
 			
 			var mat: SpatialMaterial = mesh.surface_get_material(t)
 			if mat == null:
-				mat = blank_material
+				mat = default_material
 			
 			# add verticies
 			for v in verts:
@@ -279,10 +315,25 @@ func generate_file_contents(meshes) -> void:
 			# create materials for current surface
 			if not mat in used_materials:
 				_matcont += str("newmtl " + str(mat), "\n")
+				
+				# diffuse color
 				_matcont += str("Kd ", mat.albedo_color.r, " ", mat.albedo_color.g, " ", mat.albedo_color.b, "\n")
-#				_matcont += str("Ke ", mat.emission.r, " ", mat.emission.g, " ", mat.emission.b, "\n")
+				
+				# diffuse texture
+				if mat == default_material or mat.albedo_texture:
+					var albedo_texture_name := "colormap" + str(used_materials.size()) + ".png"
+					if mat == default_material:
+						_textures_list[albedo_texture_name] = _ground_image
+					else:
+						_textures_list[albedo_texture_name] = mat.albedo_texture
+					_matcont += "map_Kd " + albedo_texture_name + "\n"
+				
+#				# transmission filter color
 #				_matcont += str("Tf ", mat.transmission.r, " ", mat.transmission.g, " ", mat.transmission.b, "\n")
+				
+#				# transparency/dissolve value
 #				_matcont += str("d ", mat.albedo_color.a, "\n")
+				
 				used_materials.append(mat)
 		
 		if meshes.size() > 1: # display progress only when exporting multiple meshes
@@ -319,9 +370,22 @@ func export_files_to(path: String) -> int:
 	file.store_string(_matcont)
 	file.close()
 	
+	# save png files:
+	for tex_name in _textures_list:
+		var tex_data = _textures_list[tex_name]
+		
+		if tex_data is Texture:
+			tex_data = tex_data.get_data()
+		
+		if not tex_data is Image:
+			continue
+		
+		tex_data.save_png(path.plus_file(tex_name))
+	
 	# clear buffers
 	_objcont = ""
 	_matcont = ""
+	_textures_list = {}
 	
 	return OK
 
