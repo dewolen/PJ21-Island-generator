@@ -4,6 +4,8 @@ extends Control
 onready var sliders := $SlidersContainer
 onready var click_blocker := $ClickBlocker
 onready var first_person_cb := $SlidersContainer/HBC8/FirstPersonCB
+onready var single_thread_cb := $SingleThreadCB
+onready var export_mesh_button := $ExportMeshButton
 
 onready var octaves_sh := sliders.get_node("HBC/OctavesHSlider")
 onready var period_sh := sliders.get_node("HBC2/PeriodHSlider")
@@ -37,6 +39,14 @@ func _ready() -> void:
 	
 	set_block(false)
 	GenParams.randomize_seed()
+	
+	if OS.has_feature("HTML5"):
+		# disable island mesh exports
+		export_mesh_button.hide()
+		# force single-threaded mode, needed when the HTML5 export type
+		# is set to regular instead of threads
+#		single_thread_cb.pressed = true
+#		single_thread_cb.hide()
 	
 #	# preset 2
 #	GenParams.radius = 256
@@ -108,5 +118,5 @@ func _on_camera_mouse_captured() -> void:
 
 
 func _on_ExportMeshButton_pressed() -> void:
-	var exporter_window := $ExportMeshButton/IslandExporter
+	var exporter_window: Popup = export_mesh_button.get_node("IslandExporter")
 	exporter_window.popup_centered()
