@@ -81,6 +81,7 @@ func start_generation() -> void:
 	is_generating = true
 	main_scene.set_interface_block(true)
 	main_scene.set_player_pause(true)
+	seed(current_seed)
 	GenParams.reset()
 	LandmassGenerator.reset()
 	StructureGenerator.reset()
@@ -171,6 +172,7 @@ func _thread_finished_generation(thread: Thread) -> void:
 
 
 func randomize_seed() -> void:
+	randomize()
 	self.current_seed = randi()
 
 

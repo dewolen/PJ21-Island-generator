@@ -4,6 +4,7 @@ extends Node
 
 const VERTEX_COLOR_MATERIAL := preload("res://materials/vertex_color_mat.tres")
 const SAND_MATERIAL := preload("res://materials/sand_mat.tres")
+const PATH_COLOR := Color("#bd9166")
 
 var meshes_container: Spatial
 var biome_colors := preload("res://resources/biome_colors.tres")
@@ -144,7 +145,7 @@ func get_transformed_noise(x: int, z: int) -> float:
 
 func get_surface_color(value: int) -> Color:
 	if value == 1:
-		return Color.peru
+		return PATH_COLOR
 	return Color.black
 
 
